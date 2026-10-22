@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# builds
+.next/
+out/
+
+# turbo cache
+.turbo/
+
+# env — never commit real keys
+.env
+.env.local
+.env*.local
+
+# logs & editor
+*.log
+.DS_Store
+.idea/
+.vscode/

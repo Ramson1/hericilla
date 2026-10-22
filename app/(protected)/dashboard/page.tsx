@@ -1,0 +1,135 @@
+"use client";
+
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import {
+  PageHeader,
+  HintCard,
+  StatCard,
+  Card,
+  Skeleton,
+  BigButton,
+} from "@hericilla/ui";
+import { ArrowRight, AlertTriangle } from "lucide-react";
+import { headCount, todayWat } from "@/lib/data";
+import { useAuth } from "@/lib/auth";
+
+export default function DashboardPage() {
+  const { profile } = useAuth();
+
+  const { data: kpis, isPending } = useQuery({
+    queryKey: ["dashboard-kpis"],
+    queryFn: async () => {
+      const { start } = todayWat();
+      const monthStart = start.slice(0, 8) + "01T00:00:00+01:00";
+      const [
+        srOpen,
+        woActive,
+        woDoneMonth,
+        enqNew,
+        chatsOpen,
+        invOverdue,
+        prPending,
+        clockedToday,
+      ] = await Promise.all([
+        headCount("service_requests", (q) => q.in("status", ["new", "quoted", "approved", "assigned", "in_progress"]).is("deleted_at", null)),
+        headCount("work_orders", (q) => q.in("status", ["open", "in_progress"])),
+        headCount("work_orders", (q) => q.in("status", ["completed", "closed"]).gte("completed_at", monthStart)),
+        headCount("enquiries", (q) => q.eq("status", "new")),
+        headCount("chat_threads", (q) => q.eq("status", "open")),
+        headCount("invoices", (q) => q.eq("status", "overdue")),
+        headCount("purchase_requests", (q) => q.eq("status", "pending_approval")),
+        headCount("attendance_events", (q) => q.eq("event_type", "clock_in").gte("event_time", start)),
+      ]);
+      return { srOpen, woActive, woDoneMonth, enqNew, chatsOpen, invOverdue, prPending, clockedToday };
+    },
+  });
+
+  const firstName = (profile?.full_name || profile?.email || "").split(" ")[0];
+  const attention = kpis
+    ? [
+        { n: kpis.enqNew, label: "website enquiries waiting for a first reply", href: "/inbox", word: "Waiting for response" },
+        { n: kpis.chatsOpen, label: "live chats still open", href: "/inbox/chat", word: "Open chat" },
+        { n: kpis.srOpen, label: "service requests not yet completed", href: "/jobs", word: "In progress" },
+        { n: kpis.prPending, label: "purchase requests waiting for approval", href: "/procurement", word: "Waiting for approval" },
+        { n: kpis.invOverdue, label: "invoices past their due date", href: "/money", word: "Overdue" },
+      ].filter((x) => x.n > 0)
+    : [];
+
+  return (
+    <div>
+      <PageHeader
+        title={`Good day, ${firstName || "team"}`}
+        purpose="This page shows what is happening across the company today, and what needs you first."
+        actions={
+          <Link href="/jobs">
+            <BigButton icon={<ArrowRight className="h-5 w-5" />}>+ New Job</BigButton>
+          </Link>
+        }
+      />
+
+      <HintCard
+        steps={[
+          "Look at the red numbers below first — they are things waiting on you.",
+          "Tap a number or a red row to jump straight to those items.",
+          "Everything else can wait until the urgent list is empty.",
+        ]}
+      />
+
+      {isPending || !kpis ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-28" />
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Today triage */}
+          <section className="mt-6" aria-label="Today">
+            <h2 className="text-xl font-bold text-brand-950 mb-3">Today</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Enquiries waiting" value={kpis.enqNew} hint="New website requests" />
+              <StatCard label="Open chats" value={kpis.chatsOpen} hint="Website live chat" />
+              <StatCard label="Active jobs" value={kpis.woActive} hint="Work orders in progress" />
+              <StatCard label="Clocked in today" value={kpis.clockedToday} hint="Staff who signed in" />
+            </div>
+          </section>
+
+          <section className="mt-8" aria-label="Needs your attention">
+            <h2 className="text-xl font-bold text-brand-950 mb-3 flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6 text-warning-600" /> Needs your attention
+            </h2>
+            <Card className="divide-y divide-[var(--color-line)] !p-0">
+              {attention.length === 0 ? (
+                <p className="p-6 text-lg text-ink-soft">
+                  Nothing urgent right now. When something waits on you, it appears here.
+                </p>
+              ) : (
+                attention.map((a) => (
+                  <Link key={a.label} href={a.href} className="flex items-center justify-between gap-4 p-5 hover:bg-brand-50">
+                    <span className="text-lg">
+                      <strong className="text-brand-950">{a.n}</strong> {a.label}
+                    </span>
+                    <span className="rounded-full bg-danger-100 text-danger-800 px-4 py-1 font-bold text-base whitespace-nowrap">
+                      {a.word}
+                    </span>
+                  </Link>
+                ))
+              )}
+            </Card>
+          </section>
+
+          <section className="mt-8" aria-label="Everything else">
+            <h2 className="text-xl font-bold text-brand-950 mb-3">Everything else</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Requests being worked" value={kpis.srOpen} hint="Service requests open" />
+              <StatCard label="Completed this month" value={kpis.woDoneMonth} hint="Work orders finished" />
+              <StatCard label="POs awaiting approval" value={kpis.prPending} hint="Procurement queue" />
+              <StatCard label="Overdue invoices" value={kpis.invOverdue} hint="Follow up on payment" />
+            </div>
+          </section>
+        </>
+      )}
+    </div>
+  );
+}

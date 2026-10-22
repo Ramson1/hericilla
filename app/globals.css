@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "@hericilla/config/tokens.css";
+
+/* Admin surfaces run one notch larger for elderly readability */
+html {
+  font-size: 19px;
+}

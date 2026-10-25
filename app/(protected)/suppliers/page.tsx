@@ -69,7 +69,7 @@ export default function SuppliersPage() {
   const { data: rows, isPending } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("suppliers").select("*").is("deleted_at", null).order("name");
+      const { data } = await getSupabase().from("hericilla_suppliers").select("*").is("deleted_at", null).order("name");
       return (data as Supplier[]) ?? [];
     },
   });
@@ -120,8 +120,8 @@ export default function SuppliersPage() {
       notes: form.notes || null,
     };
     const { error: err } = editId
-      ? await getSupabase().from("suppliers").update(payload).eq("id", editId)
-      : await getSupabase().from("suppliers").insert({ ...payload, status: "prospective", created_by: profile?.id });
+      ? await getSupabase().from("hericilla_suppliers").update(payload).eq("id", editId)
+      : await getSupabase().from("hericilla_suppliers").insert({ ...payload, status: "prospective", created_by: profile?.id });
     setBusy(false);
     if (err) {
       setError("Could not save: " + err.message);
@@ -132,7 +132,7 @@ export default function SuppliersPage() {
   }
 
   async function setStatus(s: Supplier, status: string) {
-    await getSupabase().from("suppliers").update({ status }).eq("id", s.id);
+    await getSupabase().from("hericilla_suppliers").update({ status }).eq("id", s.id);
     void qc.invalidateQueries({ queryKey: ["suppliers"] });
   }
 

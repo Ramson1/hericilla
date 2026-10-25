@@ -57,7 +57,7 @@ export default function CmsBlogPage() {
   const { data: rows, isPending } = useQuery({
     queryKey: ["blog"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("blog_posts").select("*").order("created_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_blog_posts").select("*").order("created_at", { ascending: false });
       return (data as Post[]) ?? [];
     },
   });
@@ -105,8 +105,8 @@ export default function CmsBlogPage() {
         : null,
     };
     const { error: err } = editId
-      ? await getSupabase().from("blog_posts").update(payload).eq("id", editId)
-      : await getSupabase().from("blog_posts").insert({ ...payload, author_id: profile?.id });
+      ? await getSupabase().from("hericilla_blog_posts").update(payload).eq("id", editId)
+      : await getSupabase().from("hericilla_blog_posts").insert({ ...payload, author_id: profile?.id });
     setBusy(false);
     if (err) {
       setError("Could not save: " + err.message);
@@ -117,7 +117,7 @@ export default function CmsBlogPage() {
   }
 
   async function remove(p: Post) {
-    await getSupabase().from("blog_posts").delete().eq("id", p.id);
+    await getSupabase().from("hericilla_blog_posts").delete().eq("id", p.id);
     void qc.invalidateQueries({ queryKey: ["blog"] });
   }
 

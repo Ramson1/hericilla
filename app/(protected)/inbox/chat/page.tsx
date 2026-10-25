@@ -38,7 +38,7 @@ export default function ChatInboxPage() {
   const { data: threads, isPending } = useQuery({
     queryKey: ["chat-threads"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("chat_threads").select("*").order("last_message_at", { ascending: false }).limit(100);
+      const { data } = await getSupabase().from("hericilla_chat_threads").select("*").order("last_message_at", { ascending: false }).limit(100);
       return (data as Thread[]) ?? [];
     },
   });
@@ -46,7 +46,7 @@ export default function ChatInboxPage() {
   const { data: messages } = useQuery({
     queryKey: ["chat-messages", openThread],
     queryFn: async () => {
-      const { data } = await getSupabase().from("chat_messages").select("*").eq("thread_id", openThread).order("created_at").limit(200);
+      const { data } = await getSupabase().from("hericilla_chat_messages").select("*").eq("thread_id", openThread).order("created_at").limit(200);
       return (data as Msg[]) ?? [];
     },
     enabled: !!openThread,
@@ -56,12 +56,12 @@ export default function ChatInboxPage() {
   useEffect(() => {
     const ch = getSupabase()
       .channel("admin-chat-inbox")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "hericilla_chat_messages" }, (payload) => {
         const m = payload.new as Msg;
         void qc.invalidateQueries({ queryKey: ["chat-threads"] });
         void qc.invalidateQueries({ queryKey: ["chat-messages", m.thread_id] });
       })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_threads" }, () => {
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "hericilla_chat_threads" }, () => {
         void qc.invalidateQueries({ queryKey: ["chat-threads"] });
       })
       .subscribe();
@@ -79,21 +79,21 @@ export default function ChatInboxPage() {
     if (!openThread) return;
     const unread = (messages ?? []).filter((m) => m.sender_role === "visitor" && !m.read_at);
     if (unread.length === 0) return;
-    void getSupabase().from("chat_messages").update({ read_at: new Date().toISOString() }).in("id", unread.map((m) => m.id));
+    void getSupabase().from("hericilla_chat_messages").update({ read_at: new Date().toISOString() }).in("id", unread.map((m) => m.id));
   }, [openThread, messages]);
 
   async function send() {
     const body = draft.trim();
     if (!body || !openThread || !profile) return;
     setSending(true);
-    await getSupabase().from("chat_messages").insert({
+    await getSupabase().from("hericilla_chat_messages").insert({
       thread_id: openThread,
       sender_role: "agent",
       sender_id: profile.id,
       body,
     });
     await getSupabase()
-      .from("chat_threads")
+      .from("hericilla_chat_threads")
       .update({ last_message_at: new Date().toISOString(), last_message_sender: "agent", assigned_admin: profile.id })
       .eq("id", openThread);
     setSending(false);
@@ -103,7 +103,7 @@ export default function ChatInboxPage() {
   }
 
   async function closeThread(id: string) {
-    await getSupabase().from("chat_threads").update({ status: "closed" }).eq("id", id);
+    await getSupabase().from("hericilla_chat_threads").update({ status: "closed" }).eq("id", id);
     void qc.invalidateQueries({ queryKey: ["chat-threads"] });
   }
 

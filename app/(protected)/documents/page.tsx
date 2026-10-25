@@ -54,8 +54,8 @@ export default function DocumentsPage() {
     queryKey: ["documents"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("documents")
-        .select("*, clients(name)")
+        .from("hericilla_documents")
+        .select("*, clients:hericilla_clients(name)")
         .order("created_at", { ascending: false })
         .limit(300);
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
@@ -69,7 +69,7 @@ export default function DocumentsPage() {
   const { data: clients } = useQuery({
     queryKey: ["clients-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("clients").select("id, name").is("deleted_at", null).order("name");
+      const { data } = await getSupabase().from("hericilla_clients").select("id, name").is("deleted_at", null).order("name");
       return (data as { id: string; name: string }[]) ?? [];
     },
     enabled: uploadOpen,
@@ -93,16 +93,16 @@ export default function DocumentsPage() {
     setBusy(true);
     setError(null);
     const path = `${profile?.id}/${crypto.randomUUID()}-${file.name}`;
-    const { error: upErr } = await getSupabase().storage.from("documents").upload(path, file, { upsert: false });
+    const { error: upErr } = await getSupabase().storage.from("hericilla-documents").upload(path, file, { upsert: false });
     if (upErr) {
       setBusy(false);
       setError("Could not upload the file: " + upErr.message);
       return;
     }
-    const { error: insErr } = await getSupabase().from("documents").insert({
+    const { error: insErr } = await getSupabase().from("hericilla_documents").insert({
       title: form.title.trim(),
       doc_type: form.doc_type,
-      storage_bucket: "documents",
+      storage_bucket: "hericilla-documents",
       file_path: path,
       sensitivity: form.sensitivity,
       expiry_date: form.expiry_date || null,
@@ -132,14 +132,14 @@ export default function DocumentsPage() {
   }
 
   async function setStatus(id: string, status: string) {
-    await getSupabase().from("documents").update({ status }).eq("id", id);
+    await getSupabase().from("hericilla_documents").update({ status }).eq("id", id);
     void qc.invalidateQueries({ queryKey: ["documents"] });
   }
 
   async function confirmDelete() {
     if (!deleteId) return;
     const doc = (docs ?? []).find((d) => d.id === deleteId);
-    await getSupabase().from("documents").delete().eq("id", deleteId);
+    await getSupabase().from("hericilla_documents").delete().eq("id", deleteId);
     if (doc) void getSupabase().storage.from(doc.storage_bucket).remove([doc.file_path]);
     setDeleteId(null);
     void qc.invalidateQueries({ queryKey: ["documents"] });

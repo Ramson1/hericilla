@@ -136,7 +136,7 @@ function UsersPanel({ canManage }: { canManage: boolean }) {
     queryKey: ["settings", "users"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("profiles")
+        .from("hericilla_profiles")
         .select("id, full_name, email, role, status, department_id")
         .order("full_name");
       return (data as UserRow[]) ?? [];
@@ -145,7 +145,7 @@ function UsersPanel({ canManage }: { canManage: boolean }) {
   const { data: departments } = useQuery({
     queryKey: ["settings", "departments"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("departments").select("id, name").order("name");
+      const { data } = await getSupabase().from("hericilla_departments").select("id, name").order("name");
       return (data as { id: string; name: string }[]) ?? [];
     },
   });
@@ -160,7 +160,7 @@ function UsersPanel({ canManage }: { canManage: boolean }) {
     const changes = draft[u.id];
     if (!changes) return;
     setSavingId(u.id);
-    const { error } = await getSupabase().from("profiles").update(changes).eq("id", u.id);
+    const { error } = await getSupabase().from("hericilla_profiles").update(changes).eq("id", u.id);
     setSavingId(null);
     if (!error) {
       setDraft((d) => ({ ...d, [u.id]: {} }));
@@ -379,7 +379,7 @@ function PermissionsPanel({ canEdit }: { canEdit: boolean }) {
   const { data: rows, isPending } = useQuery({
     queryKey: ["settings", "perms"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("role_permissions").select("*");
+      const { data } = await getSupabase().from("hericilla_role_permissions").select("*");
       return (data as PermRow[]) ?? [];
     },
   });
@@ -393,7 +393,7 @@ function PermissionsPanel({ canEdit }: { canEdit: boolean }) {
   async function save() {
     if (!current) return;
     const { error } = await getSupabase()
-      .from("role_permissions")
+      .from("hericilla_role_permissions")
       .upsert(current, { onConflict: "role,resource" });
     if (error) { alert(`Could not save: ${error.message}`); return; }
     setDraft(null);
@@ -477,7 +477,7 @@ function LimitsPanel({ canEdit }: { canEdit: boolean }) {
   const { data: rows, isPending } = useQuery({
     queryKey: ["settings", "limits"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("approval_limits").select("*");
+      const { data } = await getSupabase().from("hericilla_approval_limits").select("*");
       return (data as { role: string; max_amount: number; notes: string | null }[]) ?? [];
     },
   });
@@ -489,7 +489,7 @@ function LimitsPanel({ canEdit }: { canEdit: boolean }) {
     if (!Number.isFinite(amount) || amount < 0) { alert("Enter a valid amount in naira."); return; }
     setSaving(roleName);
     const { error } = await getSupabase()
-      .from("approval_limits")
+      .from("hericilla_approval_limits")
       .upsert({ role: roleName, max_amount: amount }, { onConflict: "role" });
     setSaving(null);
     if (error) { alert(`Could not save: ${error.message}`); return; }
@@ -552,7 +552,7 @@ function RulesPanel({ canEdit }: { canEdit: boolean }) {
   const { data: rows, isPending } = useQuery({
     queryKey: ["settings", "rules"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("attendance_rules").select("*").order("created_at");
+      const { data } = await getSupabase().from("hericilla_attendance_rules").select("*").order("created_at");
       return (data as RuleRow[]) ?? [];
     },
   });
@@ -562,7 +562,7 @@ function RulesPanel({ canEdit }: { canEdit: boolean }) {
   async function save(id: string) {
     if (!draft) return;
     setSaving(true);
-    const { error } = await getSupabase().from("attendance_rules").update(draft).eq("id", id);
+    const { error } = await getSupabase().from("hericilla_attendance_rules").update(draft).eq("id", id);
     setSaving(false);
     if (error) { alert(`Could not save: ${error.message}`); return; }
     setDraft(null);
@@ -629,7 +629,7 @@ function AppSettingsPanel({ canEdit }: { canEdit: boolean }) {
   const { data: rows, isPending } = useQuery({
     queryKey: ["settings", "app"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("app_settings").select("*").order("key");
+      const { data } = await getSupabase().from("hericilla_app_settings").select("*").order("key");
       return (data as SettingRow[]) ?? [];
     },
   });
@@ -647,7 +647,7 @@ function AppSettingsPanel({ canEdit }: { canEdit: boolean }) {
     }
     setSaving(key);
     const { error } = await getSupabase()
-      .from("app_settings")
+      .from("hericilla_app_settings")
       .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
     setSaving(null);
     if (error) { alert(`Could not save: ${error.message}`); return; }
@@ -724,16 +724,21 @@ function changedKeys(a: AuditRow): string {
   return diff.slice(0, 8).map((k) => k.replaceAll("_", " ")).join(", ");
 }
 
+/** Audit rows store the table name, which now carries the hericilla_ namespace prefix. */
+function entityLabel(entity: string): string {
+  return entity.replace(/^hericilla_/, "").replaceAll("_", " ");
+}
+
 function AuditPanel() {
   const [entity, setEntity] = useState("");
   const { data: rows, isPending } = useQuery({
     queryKey: ["settings", "audit", entity],
     queryFn: async () => {
-      let q = getSupabase().from("audit_logs").select("*").order("at", { ascending: false }).limit(200);
+      let q = getSupabase().from("hericilla_audit_logs").select("*").order("at", { ascending: false }).limit(200);
       if (entity) q = q.eq("entity", entity);
       const [{ data }, { data: people }] = await Promise.all([
         q,
-        getSupabase().from("profiles").select("id, full_name"),
+        getSupabase().from("hericilla_profiles").select("id, full_name"),
       ]);
       const names = new Map((people as { id: string; full_name: string }[] ?? []).map((p) => [p.id, p.full_name]));
       return (((data as AuditRow[]) ?? []).map((r) => ({
@@ -748,7 +753,7 @@ function AuditPanel() {
   const exportCsv = () => {
     const head = "When,Who,Action,Record,Changed fields";
     const body = enriched.map((r) =>
-      [`"${r.at}"`, `"${r.actor}"`, `"${r.action}"`, `"${r.entity}/${r.entity_id ?? ""}"`, `"${changedKeys(r)}"`].join(","),
+      [`"${r.at}"`, `"${r.actor}"`, `"${r.action}"`, `"${entityLabel(r.entity)}/${r.entity_id ?? ""}"`, `"${changedKeys(r)}"`].join(","),
     );
     const blob = new Blob([[head, ...body].join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -764,7 +769,7 @@ function AuditPanel() {
       <div className="flex flex-wrap items-end gap-3">
         <BigSelect
           label="Filter by record type"
-          options={entities.map((e) => ({ value: e, label: statusLabel(e) }))}
+          options={entities.map((e) => ({ value: e, label: statusLabel(entityLabel(e)) }))}
           value={entity}
           onChange={(e) => setEntity(e.target.value)}
         />
@@ -795,7 +800,7 @@ function AuditPanel() {
                   <td className="whitespace-nowrap px-4 py-3">{new Date(r.at).toLocaleString()}</td>
                   <td className="px-4 py-3 font-semibold">{r.actor}</td>
                   <td className="px-4 py-3"><StatusBadge status={r.action} /></td>
-                  <td className="px-4 py-3">{r.entity.replaceAll("_", " ")}{r.entity_id ? ` · ${String(r.entity_id).slice(0, 8)}` : ""}</td>
+                  <td className="px-4 py-3">{entityLabel(r.entity)}{r.entity_id ? ` · ${String(r.entity_id).slice(0, 8)}` : ""}</td>
                   <td className="px-4 py-3 text-ink-soft">{changedKeys(r)}</td>
                 </tr>
               ))}

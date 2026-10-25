@@ -95,8 +95,8 @@ function PodsPanel() {
     queryKey: ["deliveries", "pods"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("proof_of_delivery")
-        .select("*, transport_jobs(ref_no, status), driver:profiles!proof_of_delivery_submitted_by_fkey(full_name)")
+        .from("hericilla_proof_of_delivery")
+        .select("*, transport_jobs:hericilla_transport_jobs(ref_no, status), driver:hericilla_profiles!proof_of_delivery_submitted_by_fkey(full_name)")
         .order("delivered_at", { ascending: false })
         .limit(150);
       return ((data as Record<string, unknown>[]) ?? []).map((raw) => {
@@ -118,14 +118,14 @@ function PodsPanel() {
     setError(null);
     const sb = getSupabase();
     const { error: err1 } = await sb
-      .from("proof_of_delivery")
+      .from("hericilla_proof_of_delivery")
       .update({ verified_by: profile?.id, verified_at: new Date().toISOString() })
       .eq("id", pod.id)
       .is("verified_at", null);
     let err2 = null;
     if (!err1 && pod.job_status === "delivered") {
       // Verification moves the job itself forward (status history logs it).
-      const res = await sb.from("transport_jobs").update({ status: "verified" }).eq("id", pod.transport_job_id).eq("status", "delivered");
+      const res = await sb.from("hericilla_transport_jobs").update({ status: "verified" }).eq("id", pod.transport_job_id).eq("status", "delivered");
       err2 = res.error;
     }
     setBusyId(null);
@@ -180,13 +180,13 @@ function PodCard({ pod, onVerify, busy }: { pod: PodRow; onVerify: () => void; b
     void (async () => {
       const signed = await Promise.all(
         pod.photos.map(async (p) => {
-          const { data } = await sb.storage.from("pod-evidence").createSignedUrl(p, 3600);
+          const { data } = await sb.storage.from("hericilla-pod-evidence").createSignedUrl(p, 3600);
           return data?.signedUrl ?? p;
         }),
       );
       let sig: string | null = null;
       if (pod.recipient_signature_url) {
-        const { data } = await sb.storage.from("pod-evidence").createSignedUrl(pod.recipient_signature_url, 3600);
+        const { data } = await sb.storage.from("hericilla-pod-evidence").createSignedUrl(pod.recipient_signature_url, 3600);
         sig = data?.signedUrl ?? null;
       }
       if (alive) {
@@ -259,8 +259,8 @@ function ExpensesPanel() {
     queryKey: ["deliveries", "expenses", filter],
     queryFn: async () => {
       let q = getSupabase()
-        .from("trip_expenses")
-        .select("*, transport_jobs(ref_no), driver:profiles!trip_expenses_submitted_by_fkey(full_name)")
+        .from("hericilla_trip_expenses")
+        .select("*, transport_jobs:hericilla_transport_jobs(ref_no), driver:hericilla_profiles!trip_expenses_submitted_by_fkey(full_name)")
         .order("occurred_at", { ascending: false })
         .limit(200);
       if (filter === "pending") q = q.eq("status", "pending");
@@ -282,7 +282,7 @@ function ExpensesPanel() {
     setBusy(true);
     setError(null);
     const { error: err } = await getSupabase()
-      .from("trip_expenses")
+      .from("hericilla_trip_expenses")
       .update({
         status: next,
         approved_by: profile?.id,

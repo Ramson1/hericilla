@@ -57,7 +57,7 @@ export default function CmsCareersPage() {
   const { data: rows, isPending } = useQuery({
     queryKey: ["careers"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("careers").select("*").order("created_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_careers").select("*").order("created_at", { ascending: false });
       return (data as Career[]) ?? [];
     },
   });
@@ -65,7 +65,7 @@ export default function CmsCareersPage() {
   const { data: apps, isPending: appsPending } = useQuery({
     queryKey: ["applications", appsFor],
     queryFn: async () => {
-      const { data } = await getSupabase().from("job_applications").select("*").eq("career_id", appsFor).order("created_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_job_applications").select("*").eq("career_id", appsFor).order("created_at", { ascending: false });
       return (data as Application[]) ?? [];
     },
     enabled: !!appsFor,
@@ -74,7 +74,7 @@ export default function CmsCareersPage() {
   const { data: allApps } = useQuery({
     queryKey: ["application-counts"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("job_applications").select("career_id").eq("status", "new");
+      const { data } = await getSupabase().from("hericilla_job_applications").select("career_id").eq("status", "new");
       const map: Record<string, number> = {};
       for (const a of (data as { career_id: string | null }[]) ?? []) {
         if (a.career_id) map[a.career_id] = (map[a.career_id] ?? 0) + 1;
@@ -119,8 +119,8 @@ export default function CmsCareersPage() {
       status: form.status,
     };
     const { error: err } = editId
-      ? await getSupabase().from("careers").update(payload).eq("id", editId)
-      : await getSupabase().from("careers").insert(payload);
+      ? await getSupabase().from("hericilla_careers").update(payload).eq("id", editId)
+      : await getSupabase().from("hericilla_careers").insert(payload);
     setBusy(false);
     if (err) {
       setError("Could not save: " + err.message);
@@ -131,12 +131,12 @@ export default function CmsCareersPage() {
   }
 
   async function remove(c: Career) {
-    await getSupabase().from("careers").delete().eq("id", c.id);
+    await getSupabase().from("hericilla_careers").delete().eq("id", c.id);
     void qc.invalidateQueries({ queryKey: ["careers"] });
   }
 
   async function setAppStatus(a: Application, status: string) {
-    await getSupabase().from("job_applications").update({ status }).eq("id", a.id);
+    await getSupabase().from("hericilla_job_applications").update({ status }).eq("id", a.id);
     void qc.invalidateQueries({ queryKey: ["applications", appsFor] });
     void qc.invalidateQueries({ queryKey: ["application-counts"] });
   }

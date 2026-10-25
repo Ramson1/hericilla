@@ -65,8 +65,8 @@ export default function MoneyPage() {
     queryKey: ["invoices"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("invoices")
-        .select("*, clients(name)")
+        .from("hericilla_invoices")
+        .select("*, clients:hericilla_clients(name)")
         .is("deleted_at", null)
         .order("issue_date", { ascending: false })
         .limit(300);
@@ -82,8 +82,8 @@ export default function MoneyPage() {
     queryKey: ["expenses"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("expenses")
-        .select("*, submitter:profiles!expenses_submitted_by_fkey(full_name)")
+        .from("hericilla_expenses")
+        .select("*, submitter:hericilla_profiles!expenses_submitted_by_fkey(full_name)")
         .order("occurred_at", { ascending: false })
         .limit(300);
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
@@ -97,7 +97,7 @@ export default function MoneyPage() {
   const { data: clients } = useQuery({
     queryKey: ["clients-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("clients").select("id, name").is("deleted_at", null).order("name");
+      const { data } = await getSupabase().from("hericilla_clients").select("id, name").is("deleted_at", null).order("name");
       return (data as { id: string; name: string }[]) ?? [];
     },
     enabled: creating || expenseOpen,
@@ -107,7 +107,7 @@ export default function MoneyPage() {
     queryKey: ["work-orders-mini"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("work_orders")
+        .from("hericilla_work_orders")
         .select("id, wo_number")
         .in("status", ["completed", "invoiced", "closed", "in_progress"])
         .order("created_at", { ascending: false })
@@ -139,7 +139,7 @@ export default function MoneyPage() {
     setBusy(true);
     setError(null);
     const { data: inv, error: insErr } = await getSupabase()
-      .from("invoices")
+      .from("hericilla_invoices")
       .insert({
         client_id: form.client_id,
         work_order_id: form.work_order_id || null,
@@ -156,7 +156,7 @@ export default function MoneyPage() {
       setError("Could not save: " + insErr?.message);
       return;
     }
-    await getSupabase().from("invoice_items").insert(
+    await getSupabase().from("hericilla_invoice_items").insert(
       goodLines.map((l) => ({
         invoice_id: inv.id,
         description: l.description.trim(),
@@ -179,7 +179,7 @@ export default function MoneyPage() {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("expenses").insert({
+    const { error: err } = await getSupabase().from("hericilla_expenses").insert({
       category: expense.category,
       amount: Number(expense.amount),
       description: expense.description || null,
@@ -198,7 +198,7 @@ export default function MoneyPage() {
 
   async function decideExpense(id: string, approved: boolean) {
     await getSupabase()
-      .from("expenses")
+      .from("hericilla_expenses")
       .update({ status: approved ? "approved" : "rejected", approved_by: profile?.id, approved_at: new Date().toISOString() })
       .eq("id", id);
     void qc.invalidateQueries({ queryKey: ["expenses"] });

@@ -93,7 +93,7 @@ export default function AttendancePage() {
   const { data: daily, isPending } = useQuery({
     queryKey: ["attendance-today"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("attendance_daily").select("*").eq("work_date", today);
+      const { data } = await getSupabase().from("hericilla_attendance_daily").select("*").eq("work_date", today);
       return (data as Daily[]) ?? [];
     },
   });
@@ -101,7 +101,7 @@ export default function AttendancePage() {
   const { data: names } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("profiles").select("id, full_name").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").order("full_name");
       return (data as { id: string; full_name: string }[]) ?? [];
     },
   });
@@ -110,7 +110,7 @@ export default function AttendancePage() {
   const { data: stale } = useQuery({
     queryKey: ["attendance-stale"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("attendance_daily").select("*").eq("day_status", "on_duty").lt("work_date", today);
+      const { data } = await getSupabase().from("hericilla_attendance_daily").select("*").eq("day_status", "on_duty").lt("work_date", today);
       return (data as Daily[]) ?? [];
     },
   });
@@ -118,7 +118,7 @@ export default function AttendancePage() {
   const { data: shifts } = useQuery({
     queryKey: ["shifts"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("shifts").select("*").order("start_time");
+      const { data } = await getSupabase().from("hericilla_shifts").select("*").order("start_time");
       return (data as Shift[]) ?? [];
     },
   });
@@ -129,8 +129,8 @@ export default function AttendancePage() {
       const end = new Date(weekStart);
       end.setDate(end.getDate() + 6);
       const { data } = await getSupabase()
-        .from("shift_assignments")
-        .select("*, shift:shifts!shift_assignments_shift_id_fkey(name)")
+        .from("hericilla_shift_assignments")
+        .select("*, shift:hericilla_shifts!shift_assignments_shift_id_fkey(name)")
         .gte("work_date", weekStart)
         .lte("work_date", end.toISOString().slice(0, 10))
         .order("work_date");
@@ -146,7 +146,7 @@ export default function AttendancePage() {
   const { data: corrections } = useQuery({
     queryKey: ["corrections"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("attendance_corrections").select("*").order("created_at", { ascending: false }).limit(200);
+      const { data } = await getSupabase().from("hericilla_attendance_corrections").select("*").order("created_at", { ascending: false }).limit(200);
       return (data as Correction[]) ?? [];
     },
   });
@@ -154,7 +154,7 @@ export default function AttendancePage() {
   const { data: leaves } = useQuery({
     queryKey: ["leave-requests"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("leave_requests").select("*").order("created_at", { ascending: false }).limit(200);
+      const { data } = await getSupabase().from("hericilla_leave_requests").select("*").order("created_at", { ascending: false }).limit(200);
       return (data as LeaveRow[]) ?? [];
     },
   });
@@ -162,7 +162,7 @@ export default function AttendancePage() {
   async function createShift() {
     if (!shift.name.trim()) return;
     setBusy(true);
-    await getSupabase().from("shifts").insert({
+    await getSupabase().from("hericilla_shifts").insert({
       name: shift.name.trim(),
       start_time: shift.start_time + ":00",
       end_time: shift.end_time + ":00",
@@ -181,7 +181,7 @@ export default function AttendancePage() {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("shift_assignments").insert({
+    const { error: err } = await getSupabase().from("hericilla_shift_assignments").insert({
       employee_id: assign.employee_id,
       shift_id: assign.shift_id,
       work_date: assign.work_date,
@@ -200,7 +200,7 @@ export default function AttendancePage() {
 
   async function approveCorrection(id: string) {
     setBusy(true);
-    const { error: err } = await getSupabase().rpc("approve_attendance_correction", { c_id: id });
+    const { error: err } = await getSupabase().rpc("hericilla_approve_attendance_correction", { c_id: id });
     setBusy(false);
     if (err) setError(err.message);
     void qc.invalidateQueries({ queryKey: ["corrections"] });
@@ -209,7 +209,7 @@ export default function AttendancePage() {
 
   async function rejectCorrection(id: string) {
     await getSupabase()
-      .from("attendance_corrections")
+      .from("hericilla_attendance_corrections")
       .update({ status: "rejected", decided_by: profile?.id, decided_at: new Date().toISOString() })
       .eq("id", id);
     void qc.invalidateQueries({ queryKey: ["corrections"] });
@@ -217,7 +217,7 @@ export default function AttendancePage() {
 
   async function decideLeave(id: string, approved: boolean) {
     await getSupabase()
-      .from("leave_requests")
+      .from("hericilla_leave_requests")
       .update({ status: approved ? "approved" : "rejected", decided_by: profile?.id, decided_at: new Date().toISOString() })
       .eq("id", id);
     void qc.invalidateQueries({ queryKey: ["leave-requests"] });
@@ -348,7 +348,7 @@ export default function AttendancePage() {
                               variant="ghost"
                               className="text-danger-800"
                               onClick={async () => {
-                                await getSupabase().from("shift_assignments").delete().eq("id", a.id);
+                                await getSupabase().from("hericilla_shift_assignments").delete().eq("id", a.id);
                                 void qc.invalidateQueries({ queryKey: ["shift-assignments", weekStart] });
                               }}
                             >

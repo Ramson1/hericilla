@@ -39,7 +39,7 @@ export default function VehiclesPage() {
   const { data: board, isPending } = useQuery({
     queryKey: ["fleet", "board"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("v_fleet_board").select("*");
+      const { data } = await getSupabase().from("hericilla_fleet_board").select("*");
       return (data as FleetBoardRow[]) ?? [];
     },
   });
@@ -47,7 +47,7 @@ export default function VehiclesPage() {
   const { data: vehicles } = useQuery({
     queryKey: ["fleet", "vehicles"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("vehicles").select("*").order("reg_no");
+      const { data } = await getSupabase().from("hericilla_vehicles").select("*").order("reg_no");
       return (data as VehicleRow[]) ?? [];
     },
   });
@@ -56,7 +56,7 @@ export default function VehiclesPage() {
     queryKey: ["fleet", "drivers"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("profiles")
+        .from("hericilla_profiles")
         .select("id, full_name")
         .eq("role", "driver")
         .eq("status", "active")
@@ -69,7 +69,7 @@ export default function VehiclesPage() {
     queryKey: ["fleet", "open-wos"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("work_orders")
+        .from("hericilla_work_orders")
         .select("id, wo_number")
         .not("status", "in", "('closed')")
         .order("created_at", { ascending: false })
@@ -81,7 +81,7 @@ export default function VehiclesPage() {
   const { data: sites } = useQuery({
     queryKey: ["fleet", "sites"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("sites").select("id, name").order("name");
+      const { data } = await getSupabase().from("hericilla_sites").select("id, name").order("name");
       return (data as SiteMini[]) ?? [];
     },
   });
@@ -90,7 +90,7 @@ export default function VehiclesPage() {
     queryKey: ["fleet", "today-movements"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("vehicle_movements")
+        .from("hericilla_vehicle_movements")
         .select("id, movement_type")
         .gte("occurred_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
         .limit(500);

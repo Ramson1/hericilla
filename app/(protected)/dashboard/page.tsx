@@ -32,14 +32,14 @@ export default function DashboardPage() {
         prPending,
         clockedToday,
       ] = await Promise.all([
-        headCount("service_requests", (q) => q.in("status", ["new", "quoted", "approved", "assigned", "in_progress"]).is("deleted_at", null)),
-        headCount("work_orders", (q) => q.in("status", ["open", "in_progress"])),
-        headCount("work_orders", (q) => q.in("status", ["completed", "closed"]).gte("completed_at", monthStart)),
-        headCount("enquiries", (q) => q.eq("status", "new")),
-        headCount("chat_threads", (q) => q.eq("status", "open")),
-        headCount("invoices", (q) => q.eq("status", "overdue")),
-        headCount("purchase_requests", (q) => q.eq("status", "pending_approval")),
-        headCount("attendance_events", (q) => q.eq("event_type", "clock_in").gte("event_time", start)),
+        headCount("hericilla_service_requests", (q) => q.in("status", ["new", "quoted", "approved", "assigned", "in_progress"]).is("deleted_at", null)),
+        headCount("hericilla_work_orders", (q) => q.in("status", ["open", "in_progress"])),
+        headCount("hericilla_work_orders", (q) => q.in("status", ["completed", "closed"]).gte("completed_at", monthStart)),
+        headCount("hericilla_enquiries", (q) => q.eq("status", "new")),
+        headCount("hericilla_chat_threads", (q) => q.eq("status", "open")),
+        headCount("hericilla_invoices", (q) => q.eq("status", "overdue")),
+        headCount("hericilla_purchase_requests", (q) => q.eq("status", "pending_approval")),
+        headCount("hericilla_attendance_events", (q) => q.eq("event_type", "clock_in").gte("event_time", start)),
       ]);
       return { srOpen, woActive, woDoneMonth, enqNew, chatsOpen, invOverdue, prPending, clockedToday };
     },

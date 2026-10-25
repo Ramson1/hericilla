@@ -24,7 +24,7 @@ export default function LoginPage() {
       if (signErr) throw signErr;
       // Role gate: the profile row is readable by its owner under RLS.
       const { data: profile } = await s
-        .from("profiles")
+        .from("hericilla_profiles")
         .select("role, status")
         .eq("id", data.user!.id)
         .maybeSingle();

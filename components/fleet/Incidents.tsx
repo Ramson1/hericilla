@@ -43,8 +43,8 @@ export function IncidentsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
     queryKey: ["fleet", "incidents"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("incidents")
-        .select("*, vehicles(reg_no), reporter:profiles!incidents_reported_by_fkey(full_name)")
+        .from("hericilla_incidents")
+        .select("*, vehicles:hericilla_vehicles(reg_no), reporter:hericilla_profiles!incidents_reported_by_fkey(full_name)")
         .order("occurred_at", { ascending: false })
         .limit(150);
       return ((data as IncidentRow[]) ?? []).map((r) => {
@@ -65,7 +65,7 @@ export function IncidentsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("incidents").insert({
+    const { error: err } = await getSupabase().from("hericilla_incidents").insert({
       vehicle_id: form.vehicle_id || null,
       incident_type: form.incident_type,
       severity: form.severity,
@@ -86,7 +86,7 @@ export function IncidentsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
 
   async function setReview(inc: IncidentRow, status: string) {
     if (status === "reviewing") {
-      const { error: err } = await getSupabase().from("incidents").update({ status: "reviewing" }).eq("id", inc.id);
+      const { error: err } = await getSupabase().from("hericilla_incidents").update({ status: "reviewing" }).eq("id", inc.id);
       if (err) setError("Could not update: " + err.message);
       void qc.invalidateQueries({ queryKey: ["fleet", "incidents"] });
       return;
@@ -102,7 +102,7 @@ export function IncidentsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
       return;
     }
     const { error: err } = await getSupabase()
-      .from("incidents")
+      .from("hericilla_incidents")
       .update({ status: "resolved", resolution_note: resolution.trim() })
       .eq("id", resolving.id);
     if (err) {

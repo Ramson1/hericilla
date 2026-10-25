@@ -42,7 +42,7 @@ export default function PurchaseOrderPage() {
   const { data: po, isPending } = useQuery({
     queryKey: ["po", id],
     queryFn: async () => {
-      const { data, error } = await getSupabase().from("purchase_orders").select("*").eq("id", id).single();
+      const { data, error } = await getSupabase().from("hericilla_purchase_orders").select("*").eq("id", id).single();
       if (error) throw error;
       return data as PO;
     },
@@ -51,7 +51,7 @@ export default function PurchaseOrderPage() {
   const { data: items } = useQuery({
     queryKey: ["po-items", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("po_items").select("*").eq("purchase_order_id", id);
+      const { data } = await getSupabase().from("hericilla_po_items").select("*").eq("purchase_order_id", id);
       return (data as PoItem[]) ?? [];
     },
   });
@@ -59,21 +59,21 @@ export default function PurchaseOrderPage() {
   const { data: supplier } = useQuery({
     queryKey: ["po-supplier", po?.supplier_id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("suppliers").select("id, name, phone, payment_terms").eq("id", po!.supplier_id).single();
+      const { data } = await getSupabase().from("hericilla_suppliers").select("id, name, phone, payment_terms").eq("id", po!.supplier_id).single();
       return data as { id: string; name: string; phone: string | null; payment_terms: string | null } | null;
     },
     enabled: !!po?.supplier_id,
   });
 
   async function updateItem(itemId: string, patch: Partial<PoItem>) {
-    await getSupabase().from("po_items").update(patch).eq("id", itemId);
+    await getSupabase().from("hericilla_po_items").update(patch).eq("id", itemId);
     void qc.invalidateQueries({ queryKey: ["po-items", id] });
     void qc.invalidateQueries({ queryKey: ["po", id] });
   }
 
   async function setStatus(status: string) {
     setBusy(true);
-    await getSupabase().from("purchase_orders").update({ status }).eq("id", id);
+    await getSupabase().from("hericilla_purchase_orders").update({ status }).eq("id", id);
     setBusy(false);
     void qc.invalidateQueries({ queryKey: ["po", id] });
     void qc.invalidateQueries({ queryKey: ["purchase-orders"] });
@@ -81,19 +81,19 @@ export default function PurchaseOrderPage() {
 
   async function recordGrn() {
     setBusy(true);
-    await getSupabase().from("goods_received_notes").insert({
+    await getSupabase().from("hericilla_goods_received_notes").insert({
       purchase_order_id: id,
       verified_by: profile?.id,
       condition_ok: grn.condition_ok === "yes",
       notes: grn.notes || null,
     });
-    await getSupabase().from("purchase_orders").update({ status: "received" }).eq("id", id);
+    await getSupabase().from("hericilla_purchase_orders").update({ status: "received" }).eq("id", id);
     // Reflect delivery on the supplier’s score (simple running average toward 5 or 2).
     if (supplier) {
       const bump = grn.condition_ok === "yes" ? 5 : 2;
       const cur = supplier ? Number(await scoreOf(supplier.id)) : 0;
       const next = Math.min(5, Math.max(0, (cur * 0.8 + bump * 0.2)));
-      await getSupabase().from("suppliers").update({ delivery_score: next }).eq("id", supplier.id);
+      await getSupabase().from("hericilla_suppliers").update({ delivery_score: next }).eq("id", supplier.id);
     }
     setBusy(false);
     setGrnOpen(false);
@@ -101,7 +101,7 @@ export default function PurchaseOrderPage() {
   }
 
   async function scoreOf(supplierId: string) {
-    const { data } = await getSupabase().from("suppliers").select("delivery_score").eq("id", supplierId).single();
+    const { data } = await getSupabase().from("hericilla_suppliers").select("delivery_score").eq("id", supplierId).single();
     return (data as { delivery_score: number })?.delivery_score ?? 0;
   }
 

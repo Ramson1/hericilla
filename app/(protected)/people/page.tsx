@@ -37,7 +37,7 @@ export default function PeoplePage() {
   const { data: people, isPending } = useQuery({
     queryKey: ["profiles-register"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("profiles").select("*").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("*").order("full_name");
       return (data as Profile[]) ?? [];
     },
   });
@@ -45,7 +45,7 @@ export default function PeoplePage() {
   const { data: departments } = useQuery({
     queryKey: ["departments"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("departments").select("id, name").order("name");
+      const { data } = await getSupabase().from("hericilla_departments").select("id, name").order("name");
       return (data as Department[]) ?? [];
     },
   });
@@ -53,7 +53,7 @@ export default function PeoplePage() {
   const { data: certs } = useQuery({
     queryKey: ["certs", detail?.id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("staff_certifications").select("*").eq("profile_id", detail!.id).order("expiry_date", { ascending: true });
+      const { data } = await getSupabase().from("hericilla_staff_certifications").select("*").eq("profile_id", detail!.id).order("expiry_date", { ascending: true });
       return (data as CertRow[]) ?? [];
     },
     enabled: !!detail,
@@ -73,7 +73,7 @@ export default function PeoplePage() {
     setBusy(true);
     setError(null);
     const { error: err } = await getSupabase()
-      .from("profiles")
+      .from("hericilla_profiles")
       .update({
         role: edit.role || detail.role,
         department_id: edit.department_id || null,
@@ -95,7 +95,7 @@ export default function PeoplePage() {
   async function addCert() {
     if (!detail || !cert.name.trim()) return;
     setBusy(true);
-    await getSupabase().from("staff_certifications").insert({
+    await getSupabase().from("hericilla_staff_certifications").insert({
       profile_id: detail.id,
       name: cert.name.trim(),
       issued_by: cert.issued_by || null,

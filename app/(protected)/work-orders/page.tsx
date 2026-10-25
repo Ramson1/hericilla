@@ -44,8 +44,8 @@ export default function WorkOrdersPage() {
     queryKey: ["work-orders"],
     queryFn: async () => {
       const { data, error } = await getSupabase()
-        .from("work_orders")
-        .select("*, clients(name), service_requests(id, ref_no)")
+        .from("hericilla_work_orders")
+        .select("*, clients:hericilla_clients(name), service_requests:hericilla_service_requests(id, ref_no)")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;

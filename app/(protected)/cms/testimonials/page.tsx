@@ -41,7 +41,7 @@ export default function CmsTestimonialsPage() {
   const { data: rows, isPending } = useQuery({
     queryKey: ["testimonials"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("testimonials").select("*").order("display_order").order("created_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_testimonials").select("*").order("display_order").order("created_at", { ascending: false });
       return (data as Testimonial[]) ?? [];
     },
   });
@@ -81,8 +81,8 @@ export default function CmsTestimonialsPage() {
       display_order: Number(form.display_order) || 0,
     };
     const { error: err } = editId
-      ? await getSupabase().from("testimonials").update(payload).eq("id", editId)
-      : await getSupabase().from("testimonials").insert({ ...payload, approved: false });
+      ? await getSupabase().from("hericilla_testimonials").update(payload).eq("id", editId)
+      : await getSupabase().from("hericilla_testimonials").insert({ ...payload, approved: false });
     setBusy(false);
     if (err) {
       setError("Could not save: " + err.message);
@@ -93,12 +93,12 @@ export default function CmsTestimonialsPage() {
   }
 
   async function toggleApproved(t: Testimonial) {
-    await getSupabase().from("testimonials").update({ approved: !t.approved }).eq("id", t.id);
+    await getSupabase().from("hericilla_testimonials").update({ approved: !t.approved }).eq("id", t.id);
     void qc.invalidateQueries({ queryKey: ["testimonials"] });
   }
 
   async function remove(t: Testimonial) {
-    await getSupabase().from("testimonials").delete().eq("id", t.id);
+    await getSupabase().from("hericilla_testimonials").delete().eq("id", t.id);
     void qc.invalidateQueries({ queryKey: ["testimonials"] });
   }
 

@@ -79,8 +79,8 @@ export default function JobDetailPage() {
     queryKey: ["sr", id],
     queryFn: async () => {
       const { data, error } = await getSupabase()
-        .from("service_requests")
-        .select("*, clients(name)")
+        .from("hericilla_service_requests")
+        .select("*, clients:hericilla_clients(name)")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -93,8 +93,8 @@ export default function JobDetailPage() {
     queryKey: ["quotes", id],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("quotations")
-        .select("*, quotation_items(*)")
+        .from("hericilla_quotations")
+        .select("*, quotation_items:hericilla_quotation_items(*)")
         .eq("service_request_id", id)
         .order("created_at", { ascending: false });
       return (data as Quote[]) ?? [];
@@ -104,7 +104,7 @@ export default function JobDetailPage() {
   const { data: workOrders } = useQuery({
     queryKey: ["wos", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("work_orders").select("*").eq("service_request_id", id);
+      const { data } = await getSupabase().from("hericilla_work_orders").select("*").eq("service_request_id", id);
       return (data as Wo[]) ?? [];
     },
   });
@@ -112,7 +112,7 @@ export default function JobDetailPage() {
   const { data: feedbackRows } = useQuery({
     queryKey: ["feedback", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("request_feedback").select("*").eq("service_request_id", id).order("created_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_request_feedback").select("*").eq("service_request_id", id).order("created_at", { ascending: false });
       return (data as Feedback[]) ?? [];
     },
   });
@@ -120,7 +120,7 @@ export default function JobDetailPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("profiles").select("id, full_name").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").order("full_name");
       return (data as Person[]) ?? [];
     },
     enabled: assignOpen,
@@ -129,12 +129,12 @@ export default function JobDetailPage() {
   const assigneeName = (people ?? []).find((p) => p.id === sr?.assigned_to)?.full_name;
 
   async function setStatus(status: string) {
-    const { error } = await getSupabase().from("service_requests").update({ status }).eq("id", id);
+    const { error } = await getSupabase().from("hericilla_service_requests").update({ status }).eq("id", id);
     if (!error) void qc.invalidateQueries({ queryKey: ["sr", id] });
   }
 
   async function saveAssignee(profileId: string) {
-    const { error } = await getSupabase().from("service_requests").update({ assigned_to: profileId || null }).eq("id", id);
+    const { error } = await getSupabase().from("hericilla_service_requests").update({ assigned_to: profileId || null }).eq("id", id);
     if (!error) {
       void qc.invalidateQueries({ queryKey: ["sr", id] });
       setAssignOpen(false);
@@ -150,7 +150,7 @@ export default function JobDetailPage() {
     setQuoteBusy(true);
     setQuoteError(null);
     const { data: created, error } = await getSupabase()
-      .from("quotations")
+      .from("hericilla_quotations")
       .insert({
         service_request_id: id,
         client_id: sr?.client_id,
@@ -165,7 +165,7 @@ export default function JobDetailPage() {
       setQuoteError("Could not save: " + error?.message);
       return;
     }
-    const { error: itemsErr } = await getSupabase().from("quotation_items").insert(
+    const { error: itemsErr } = await getSupabase().from("hericilla_quotation_items").insert(
       goodItems.map((i) => ({
         quotation_id: created.id,
         description: i.description.trim(),
@@ -188,7 +188,7 @@ export default function JobDetailPage() {
   async function setQuoteStatus(q: Quote, status: string) {
     // Approving fires the DB trigger: work order created + SR flips to 'approved'.
     await getSupabase()
-      .from("quotations")
+      .from("hericilla_quotations")
       .update({ status, approved_by: status === "approved" ? profile?.id : undefined, approved_at: status === "approved" ? new Date().toISOString() : undefined })
       .eq("id", q.id);
     void qc.invalidateQueries({ queryKey: ["quotes", id] });
@@ -198,7 +198,7 @@ export default function JobDetailPage() {
 
   async function addFeedback() {
     if (feedback.message.trim().length < 3) return;
-    await getSupabase().from("request_feedback").insert({
+    await getSupabase().from("hericilla_request_feedback").insert({
       service_request_id: id,
       kind: feedback.kind,
       message: feedback.message.trim(),

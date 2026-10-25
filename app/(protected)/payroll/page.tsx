@@ -107,7 +107,7 @@ export default function PayrollPage() {
   const { data: runs, isPending } = useQuery({
     queryKey: ["payroll", "runs"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("payroll_runs").select("*").order("period_month", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_payroll_runs").select("*").order("period_month", { ascending: false });
       return (data as RunRow[]) ?? [];
     },
   });
@@ -115,7 +115,7 @@ export default function PayrollPage() {
   const { data: runStatus } = useQuery({
     queryKey: ["payroll", "status"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("v_payroll_status").select("*");
+      const { data } = await getSupabase().from("hericilla_payroll_status").select("*");
       return (data as RunStatusRow[]) ?? [];
     },
   });
@@ -124,8 +124,8 @@ export default function PayrollPage() {
     queryKey: ["payroll", "structures"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("salary_structures")
-        .select("*, employee:profiles!salary_structures_employee_id_fkey(full_name, role)")
+        .from("hericilla_salary_structures")
+        .select("*, employee:hericilla_profiles!salary_structures_employee_id_fkey(full_name, role)")
         .order("is_current", { ascending: false })
         .order("effective_from", { ascending: false })
         .limit(300);
@@ -140,7 +140,7 @@ export default function PayrollPage() {
     queryKey: ["payroll", "employees"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("profiles")
+        .from("hericilla_profiles")
         .select("id, full_name, role")
         .eq("status", "active")
         .order("full_name");
@@ -164,9 +164,9 @@ export default function PayrollPage() {
     setBusy(true);
     setError(null);
     const sb = getSupabase();
-    const { data: runId, error: err } = await sb.rpc("generate_payroll_run", { period: `${period}-01` });
+    const { data: runId, error: err } = await sb.rpc("hericilla_generate_payroll_run", { period: `${period}-01` });
     if (!err && runId && runNotes.trim()) {
-      await sb.from("payroll_runs").update({ notes: runNotes.trim() }).eq("id", runId as string);
+      await sb.from("hericilla_payroll_runs").update({ notes: runNotes.trim() }).eq("id", runId as string);
     }
     setBusy(false);
     if (err) {
@@ -185,7 +185,7 @@ export default function PayrollPage() {
   async function submitRun(run: RunRow) {
     setError(null);
     const { error: err } = await getSupabase()
-      .from("payroll_runs")
+      .from("hericilla_payroll_runs")
       .update({ status: "pending_approval", submitted_by: profile?.id })
       .eq("id", run.id)
       .eq("status", "draft");
@@ -195,7 +195,7 @@ export default function PayrollPage() {
 
   async function approveRun(run: RunRow) {
     setError(null);
-    const { error: err } = await getSupabase().rpc("approve_payroll_run", { run: run.id });
+    const { error: err } = await getSupabase().rpc("hericilla_approve_payroll_run", { run: run.id });
     if (err) {
       setError(
         err.message.includes("own payroll")
@@ -210,7 +210,7 @@ export default function PayrollPage() {
   const [deleting, setDeleting] = useState<RunRow | null>(null);
   async function deleteRun() {
     if (!deleting) return;
-    const { error: err } = await getSupabase().from("payroll_runs").delete().eq("id", deleting.id);
+    const { error: err } = await getSupabase().from("hericilla_payroll_runs").delete().eq("id", deleting.id);
     if (err) setError("Could not delete: " + err.message);
     setDeleting(null);
     void qc.invalidateQueries({ queryKey: ["payroll"] });
@@ -227,8 +227,8 @@ export default function PayrollPage() {
     enabled: openRun !== null,
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("payslips")
-        .select("*, employee:profiles!payslips_employee_id_fkey(full_name)")
+        .from("hericilla_payslips")
+        .select("*, employee:hericilla_profiles!payslips_employee_id_fkey(full_name)")
         .eq("payroll_run_id", openRun?.id)
         .order("net", { ascending: false });
       return ((data as PayslipRow[]) ?? []).map((r) => ({
@@ -241,7 +241,7 @@ export default function PayrollPage() {
   async function markPaid() {
     if (!paying || !openRun) return;
     const { error: err } = await getSupabase()
-      .from("payslips")
+      .from("hericilla_payslips")
       .update({
         payment_status: "paid",
         paid_at: pay.paid_at,
@@ -261,7 +261,7 @@ export default function PayrollPage() {
   async function closeRunAsPaid(run: RunRow) {
     setError(null);
     const { error: err } = await getSupabase()
-      .from("payroll_runs")
+      .from("hericilla_payroll_runs")
       .update({ status: "paid", paid_at: new Date().toISOString() })
       .eq("id", run.id)
       .eq("status", "approved");
@@ -340,12 +340,12 @@ export default function PayrollPage() {
     };
     let err: { message: string } | null = null;
     if (editing) {
-      const res = await sb.from("salary_structures").update(payload).eq("id", editing.id);
+      const res = await sb.from("hericilla_salary_structures").update(payload).eq("id", editing.id);
       err = res.error;
     } else {
       // retire the old current structure first (partial unique index allows one)
-      await sb.from("salary_structures").update({ is_current: false, effective_to: form.effective_from }).eq("employee_id", form.employee_id).eq("is_current", true);
-      const res = await sb.from("salary_structures").insert({ ...payload, employee_id: form.employee_id, is_current: true, created_by: profile?.id });
+      await sb.from("hericilla_salary_structures").update({ is_current: false, effective_to: form.effective_from }).eq("employee_id", form.employee_id).eq("is_current", true);
+      const res = await sb.from("hericilla_salary_structures").insert({ ...payload, employee_id: form.employee_id, is_current: true, created_by: profile?.id });
       err = res.error;
     }
     setBusy(false);

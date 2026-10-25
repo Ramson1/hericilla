@@ -72,7 +72,7 @@ const REPORTS: ReportDef[] = [
       ],
     },
     fetch: async () => {
-      const { data } = await getSupabase().from("v_job_margins").select("*").order("margin", { ascending: false }).limit(300);
+      const { data } = await getSupabase().from("hericilla_job_margins").select("*").order("margin", { ascending: false }).limit(300);
       return (data as Record<string, unknown>[]) ?? [];
     },
   },
@@ -90,7 +90,7 @@ const REPORTS: ReportDef[] = [
     ],
     chart: { type: "pie", name: "ageing_bucket", value: "outstanding" },
     fetch: async (from, to) => {
-      let q = getSupabase().from("v_receivables").select("*");
+      let q = getSupabase().from("hericilla_receivables").select("*");
       if (from) q = q.gte("issue_date", from);
       if (to) q = q.lte("issue_date", to);
       const { data } = await q.order("due_date");
@@ -108,7 +108,7 @@ const REPORTS: ReportDef[] = [
     ],
     chart: { type: "bar", x: "state", series: [{ key: "n", label: "Count" }] },
     fetch: async () => {
-      const { data } = await getSupabase().from("v_pipeline").select("*").order("entity").order("n", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_pipeline").select("*").order("entity").order("n", { ascending: false });
       return (data as Record<string, unknown>[]) ?? [];
     },
   },
@@ -134,10 +134,10 @@ const REPORTS: ReportDef[] = [
     },
     fetch: async (from, to) => {
       const sb = getSupabase();
-      let q = sb.from("v_attendance_monthly").select("*");
+      let q = sb.from("hericilla_attendance_monthly").select("*");
       if (from) q = q.gte("month", from.slice(0, 7));
       if (to) q = q.lte("month", to.slice(0, 7));
-      const [{ data }, { data: people }] = await Promise.all([q.order("month"), sb.from("profiles").select("id, full_name")]);
+      const [{ data }, { data: people }] = await Promise.all([q.order("month"), sb.from("hericilla_profiles").select("id, full_name")]);
       const names = new Map((people as { id: string; full_name: string }[] ?? []).map((p) => [p.id, p.full_name]));
       return ((data as Record<string, unknown>[]) ?? []).map((r) => ({ ...r, full_name: names.get(r.employee_id as string) ?? "—" }));
     },
@@ -164,7 +164,7 @@ const REPORTS: ReportDef[] = [
       ],
     },
     fetch: async () => {
-      const { data } = await getSupabase().from("v_payroll_status").select("*").order("period_month", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_payroll_status").select("*").order("period_month", { ascending: false });
       return (data as Record<string, unknown>[]) ?? [];
     },
   },
@@ -182,7 +182,7 @@ const REPORTS: ReportDef[] = [
     ],
     chart: { type: "bar", x: "sku", series: [{ key: "stock_value", label: "Value" }] },
     fetch: async () => {
-      const { data } = await getSupabase().from("v_stock_valuation").select("*").order("stock_value", { ascending: false }).limit(200);
+      const { data } = await getSupabase().from("hericilla_stock_valuation").select("*").order("stock_value", { ascending: false }).limit(200);
       return (data as Record<string, unknown>[]) ?? [];
     },
   },
@@ -201,7 +201,7 @@ const REPORTS: ReportDef[] = [
     ],
     chart: { type: "pie", name: "vehicle_status", value: "odometer_km" },
     fetch: async () => {
-      const { data } = await getSupabase().from("v_fleet_board").select("*").order("reg_no");
+      const { data } = await getSupabase().from("hericilla_fleet_board").select("*").order("reg_no");
       return ((data as Record<string, unknown>[]) ?? []).map((r) => ({
         ...r,
         last_movement_at: r.last_movement_at ? new Date(String(r.last_movement_at)).toLocaleString() : "—",
@@ -227,7 +227,7 @@ const REPORTS: ReportDef[] = [
       ],
     },
     fetch: async () => {
-      const { data } = await getSupabase().from("v_enquiry_stats").select("*").order("month");
+      const { data } = await getSupabase().from("hericilla_enquiry_stats").select("*").order("month");
       return (data as Record<string, unknown>[]) ?? [];
     },
   },

@@ -30,7 +30,7 @@ export default function CmsPagesPage() {
   const { data: existing, isPending } = useQuery({
     queryKey: ["page-content"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("page_content").select("key, value").in("key", KNOWN_KEYS.map((k) => k.key));
+      const { data } = await getSupabase().from("hericilla_page_content").select("key, value").in("key", KNOWN_KEYS.map((k) => k.key));
       const map: Record<string, string> = {};
       for (const r of (data as { key: string; value: unknown }[]) ?? []) {
         if (typeof r.value === "string") map[r.key] = r.value;
@@ -49,7 +49,7 @@ export default function CmsPagesPage() {
     setBusyKey(key);
     setSaved(null);
     const { error } = await getSupabase()
-      .from("page_content")
+      .from("hericilla_page_content")
       .upsert({ key, value: text.trim(), updated_by: profile?.id, updated_at: new Date().toISOString() }, { onConflict: "key" });
     setBusyKey(null);
     if (!error) {
@@ -60,7 +60,7 @@ export default function CmsPagesPage() {
 
   async function clearOverride(key: string) {
     setBusyKey(key);
-    await getSupabase().from("page_content").delete().eq("key", key);
+    await getSupabase().from("hericilla_page_content").delete().eq("key", key);
     setDrafts((d) => {
       const n = { ...d };
       delete n[key];

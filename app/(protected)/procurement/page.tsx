@@ -59,8 +59,8 @@ export default function ProcurementPage() {
     queryKey: ["purchase-requests"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("purchase_requests")
-        .select("*, clients(name)")
+        .from("hericilla_purchase_requests")
+        .select("*, clients:hericilla_clients(name)")
         .order("created_at", { ascending: false })
         .limit(200);
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
@@ -72,8 +72,8 @@ export default function ProcurementPage() {
     queryKey: ["purchase-orders"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("purchase_orders")
-        .select("*, suppliers(name)")
+        .from("hericilla_purchase_orders")
+        .select("*, suppliers:hericilla_suppliers(name)")
         .order("created_at", { ascending: false })
         .limit(200);
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
@@ -84,7 +84,7 @@ export default function ProcurementPage() {
   const { data: clients } = useQuery({
     queryKey: ["clients-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("clients").select("id, name").is("deleted_at", null).order("name");
+      const { data } = await getSupabase().from("hericilla_clients").select("id, name").is("deleted_at", null).order("name");
       return (data as { id: string; name: string }[]) ?? [];
     },
     enabled: creating,
@@ -101,7 +101,7 @@ export default function ProcurementPage() {
     setBusy(true);
     setError(null);
     const { data: pr, error: err } = await getSupabase()
-      .from("purchase_requests")
+      .from("hericilla_purchase_requests")
       .insert({
         client_id: form.client_id || null,
         description: form.description || null,
@@ -118,7 +118,7 @@ export default function ProcurementPage() {
       setError("Could not save: " + err?.message);
       return;
     }
-    await getSupabase().from("purchase_request_items").insert(
+    await getSupabase().from("hericilla_purchase_request_items").insert(
       goodItems.map((i) => ({
         purchase_request_id: pr.id,
         material: i.material.trim(),

@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
     setProfile(null);
     if (!u || !hasSupabaseEnv()) return;
-    const { data } = await getSupabase().from("profiles").select("*").eq("id", u.id).maybeSingle();
+    const { data } = await getSupabase().from("hericilla_profiles").select("*").eq("id", u.id).maybeSingle();
     setProfile((data as Profile) ?? null);
   }
 

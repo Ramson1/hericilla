@@ -42,7 +42,7 @@ export default function ClientsPage() {
     queryKey: ["clients"],
     queryFn: async () => {
       const { data, error: err } = await getSupabase()
-        .from("clients")
+        .from("hericilla_clients")
         .select("id, name, rc_number, city, email, phone, deleted_at")
         .is("deleted_at", null)
         .order("name");
@@ -55,7 +55,7 @@ export default function ClientsPage() {
     queryKey: ["client-revenue"],
     queryFn: async () => {
       // Outstanding totals per client from the receivables view
-      const { data } = await getSupabase().from("v_receivables").select("id, client_name, outstanding");
+      const { data } = await getSupabase().from("hericilla_receivables").select("id, client_name, outstanding");
       const map: Record<string, number> = {};
       for (const r of (data as { client_name: string; outstanding: number }[]) ?? []) {
         map[r.client_name] = (map[r.client_name] ?? 0) + Number(r.outstanding ?? 0);
@@ -72,7 +72,7 @@ export default function ClientsPage() {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("clients").insert({
+    const { error: err } = await getSupabase().from("hericilla_clients").insert({
       ...form,
       created_by: profile?.id,
     });

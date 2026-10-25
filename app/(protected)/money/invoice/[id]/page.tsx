@@ -58,7 +58,7 @@ export default function InvoicePage() {
   const { data: invoice, isPending } = useQuery({
     queryKey: ["invoice", id],
     queryFn: async () => {
-      const { data, error: err } = await getSupabase().from("invoices").select("*, clients(name)").eq("id", id).single();
+      const { data, error: err } = await getSupabase().from("hericilla_invoices").select("*, clients:hericilla_clients(name)").eq("id", id).single();
       if (err) throw err;
       const row = data as Omit<Invoice, "client_name"> & { clients?: unknown };
       const c = row.clients;
@@ -70,7 +70,7 @@ export default function InvoicePage() {
   const { data: items } = useQuery({
     queryKey: ["invoice-items", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("invoice_items").select("*").eq("invoice_id", id).order("id");
+      const { data } = await getSupabase().from("hericilla_invoice_items").select("*").eq("invoice_id", id).order("id");
       return (data as InvItem[]) ?? [];
     },
   });
@@ -78,7 +78,7 @@ export default function InvoicePage() {
   const { data: payments } = useQuery({
     queryKey: ["invoice-payments", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("invoice_payments").select("*").eq("invoice_id", id).order("paid_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_invoice_payments").select("*").eq("invoice_id", id).order("paid_at", { ascending: false });
       return (data as Payment[]) ?? [];
     },
   });
@@ -86,7 +86,7 @@ export default function InvoicePage() {
   const { data: adjustments } = useQuery({
     queryKey: ["invoice-adjustments", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("invoice_adjustments").select("*").eq("invoice_id", id).order("created_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_invoice_adjustments").select("*").eq("invoice_id", id).order("created_at", { ascending: false });
       return (data as Adjustment[]) ?? [];
     },
   });
@@ -101,7 +101,7 @@ export default function InvoicePage() {
 
   async function setStatus(status: string) {
     setBusy(true);
-    await getSupabase().from("invoices").update({ status }).eq("id", id);
+    await getSupabase().from("hericilla_invoices").update({ status }).eq("id", id);
     setBusy(false);
     refresh();
   }
@@ -113,7 +113,7 @@ export default function InvoicePage() {
     }
     setBusy(true);
     setError(null);
-    await getSupabase().from("invoice_items").insert({
+    await getSupabase().from("hericilla_invoice_items").insert({
       invoice_id: id,
       description: line.description.trim(),
       quantity: Number(line.quantity) || 1,
@@ -126,7 +126,7 @@ export default function InvoicePage() {
   }
 
   async function removeLine(itemId: string) {
-    await getSupabase().from("invoice_items").delete().eq("id", itemId);
+    await getSupabase().from("hericilla_invoice_items").delete().eq("id", itemId);
     refresh();
   }
 
@@ -137,7 +137,7 @@ export default function InvoicePage() {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("invoice_payments").insert({
+    const { error: err } = await getSupabase().from("hericilla_invoice_payments").insert({
       invoice_id: id,
       amount: Number(pay.amount),
       method: pay.method,
@@ -156,7 +156,7 @@ export default function InvoicePage() {
   }
 
   async function removePayment(pid: string) {
-    await getSupabase().from("invoice_payments").delete().eq("id", pid);
+    await getSupabase().from("hericilla_invoice_payments").delete().eq("id", pid);
     refresh();
   }
 
@@ -168,7 +168,7 @@ export default function InvoicePage() {
     setBusy(true);
     setError(null);
     const signed = adj.kind === "discount" || adj.kind === "waiver" ? -Math.abs(Number(adj.amount)) : Number(adj.amount);
-    const { error: err } = await getSupabase().from("invoice_adjustments").insert({
+    const { error: err } = await getSupabase().from("hericilla_invoice_adjustments").insert({
       invoice_id: id,
       kind: adj.kind,
       amount: signed,

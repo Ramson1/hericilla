@@ -27,8 +27,8 @@ export function InspectionsPanel() {
     queryKey: ["fleet", "inspection-results"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("inspection_results")
-        .select("*, vehicles(reg_no), driver:profiles!inspection_results_driver_id_fkey(full_name), inspection_checklists(name)")
+        .from("hericilla_inspection_results")
+        .select("*, vehicles:hericilla_vehicles(reg_no), driver:hericilla_profiles!inspection_results_driver_id_fkey(full_name), inspection_checklists:hericilla_inspection_checklists(name)")
         .order("submitted_at", { ascending: false })
         .limit(100);
       return ((data as InspectionRow[]) ?? []).map((r) => {
@@ -46,7 +46,7 @@ export function InspectionsPanel() {
   const { data: checklists } = useQuery({
     queryKey: ["fleet", "inspection-checklists"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("inspection_checklists").select("*").eq("is_active", true).order("trip_phase", { ascending: true }).order("name");
+      const { data } = await getSupabase().from("hericilla_inspection_checklists").select("*").eq("is_active", true).order("trip_phase", { ascending: true }).order("name");
       return ((data as { id: string; name: string; trip_phase: string; items: unknown; is_active: boolean }[]) ?? []).map((c) => ({
         ...c,
         items: Array.isArray(c.items) ? (c.items as string[]) : [],
@@ -62,7 +62,7 @@ export function InspectionsPanel() {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("inspection_checklists").insert({
+    const { error: err } = await getSupabase().from("hericilla_inspection_checklists").insert({
       name: form.name.trim(),
       trip_phase: form.trip_phase,
       items,

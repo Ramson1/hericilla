@@ -36,7 +36,7 @@ export default function AnnouncementsPage() {
   const { data, isPending } = useQuery({
     queryKey: ["announcements"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("announcements").select("*").order("created_at", { ascending: false }).limit(100);
+      const { data } = await getSupabase().from("hericilla_announcements").select("*").order("created_at", { ascending: false }).limit(100);
       return (data as Announcement[]) ?? [];
     },
   });
@@ -52,7 +52,7 @@ export default function AnnouncementsPage() {
     }
     setBusy(true);
     setError(null);
-    const { error: insErr } = await getSupabase().from("announcements").insert({
+    const { error: insErr } = await getSupabase().from("hericilla_announcements").insert({
       title: title.trim(),
       body: body.trim(),
       audience,
@@ -66,7 +66,7 @@ export default function AnnouncementsPage() {
     }
     // Queue one outbox message per targeted role — the notify service fans out.
     for (const role of audience) {
-      await getSupabase().rpc("push_notification", {
+      await getSupabase().rpc("hericilla_push_notification", {
         target_user: null,
         target_role: role,
         chans: ["in_app", "web_push", "expo_push"],

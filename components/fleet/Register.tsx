@@ -94,8 +94,8 @@ export function RegisterPanel({ vehicles }: { vehicles: VehicleRow[] }) {
     };
     const sb = getSupabase();
     const { error: err } = editing
-      ? await sb.from("vehicles").update(payload).eq("id", editing.id)
-      : await sb.from("vehicles").insert(payload);
+      ? await sb.from("hericilla_vehicles").update(payload).eq("id", editing.id)
+      : await sb.from("hericilla_vehicles").insert(payload);
     setBusy(false);
     if (err) {
       setError(
@@ -112,7 +112,7 @@ export function RegisterPanel({ vehicles }: { vehicles: VehicleRow[] }) {
   async function retire() {
     if (!retiring) return;
     const { error: err } = await getSupabase()
-      .from("vehicles")
+      .from("hericilla_vehicles")
       .update({ status: "retired", updated_at: new Date().toISOString() })
       .eq("id", retiring.id);
     if (err) setError("Could not retire: " + err.message);

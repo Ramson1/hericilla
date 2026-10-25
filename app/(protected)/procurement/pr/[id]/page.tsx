@@ -48,7 +48,7 @@ export default function PurchaseRequestPage() {
   const { data: pr, isPending } = useQuery({
     queryKey: ["pr", id],
     queryFn: async () => {
-      const { data, error } = await getSupabase().from("purchase_requests").select("*").eq("id", id).single();
+      const { data, error } = await getSupabase().from("hericilla_purchase_requests").select("*").eq("id", id).single();
       if (error) throw error;
       return data as PR;
     },
@@ -57,7 +57,7 @@ export default function PurchaseRequestPage() {
   const { data: items } = useQuery({
     queryKey: ["pr-items", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("purchase_request_items").select("*").eq("purchase_request_id", id);
+      const { data } = await getSupabase().from("hericilla_purchase_request_items").select("*").eq("purchase_request_id", id);
       return (data as PrItem[]) ?? [];
     },
   });
@@ -65,7 +65,7 @@ export default function PurchaseRequestPage() {
   const { data: quotes } = useQuery({
     queryKey: ["pr-quotes", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("supplier_quotations").select("*").eq("purchase_request_id", id).order("total_amount");
+      const { data } = await getSupabase().from("hericilla_supplier_quotations").select("*").eq("purchase_request_id", id).order("total_amount");
       return (data as SupQuote[]) ?? [];
     },
   });
@@ -73,7 +73,7 @@ export default function PurchaseRequestPage() {
   const { data: suppliers } = useQuery({
     queryKey: ["approved-suppliers"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("suppliers").select("id, name").eq("status", "approved").is("deleted_at", null).order("name");
+      const { data } = await getSupabase().from("hericilla_suppliers").select("id, name").eq("status", "approved").is("deleted_at", null).order("name");
       return (data as { id: string; name: string }[]) ?? [];
     },
     enabled: quoteOpen,
@@ -86,8 +86,8 @@ export default function PurchaseRequestPage() {
     pr?.requested_by !== profile.id;
 
   async function submitForApproval() {
-    await getSupabase().from("purchase_requests").update({ status: "pending_approval" }).eq("id", id);
-    await getSupabase().from("approvals").insert({
+    await getSupabase().from("hericilla_purchase_requests").update({ status: "pending_approval" }).eq("id", id);
+    await getSupabase().from("hericilla_approvals").insert({
       entity_type: "purchase_request",
       entity_id: id,
       required_role: pr?.required_approver_role ?? "admin",
@@ -98,15 +98,15 @@ export default function PurchaseRequestPage() {
   }
 
   async function decide(approved: boolean) {
-    await getSupabase().from("approvals").update({ status: approved ? "approved" : "rejected", decided_by: profile?.id, decided_at: new Date().toISOString() }).eq("entity_type", "purchase_request").eq("entity_id", id);
-    await getSupabase().from("purchase_requests").update({ status: approved ? "approved" : "rejected" }).eq("id", id);
+    await getSupabase().from("hericilla_approvals").update({ status: approved ? "approved" : "rejected", decided_by: profile?.id, decided_at: new Date().toISOString() }).eq("entity_type", "purchase_request").eq("entity_id", id);
+    await getSupabase().from("hericilla_purchase_requests").update({ status: approved ? "approved" : "rejected" }).eq("id", id);
     void qc.invalidateQueries({ queryKey: ["pr", id] });
   }
 
   async function addQuote() {
     if (!quote.supplier_id || !Number(quote.total_amount)) return;
     setQuoteBusy(true);
-    await getSupabase().from("supplier_quotations").insert({
+    await getSupabase().from("hericilla_supplier_quotations").insert({
       purchase_request_id: id,
       supplier_id: quote.supplier_id,
       total_amount: Number(quote.total_amount),
@@ -120,8 +120,8 @@ export default function PurchaseRequestPage() {
   }
 
   async function selectQuote(q: SupQuote) {
-    await getSupabase().from("supplier_quotations").update({ is_selected: false }).eq("purchase_request_id", id);
-    await getSupabase().from("supplier_quotations").update({ is_selected: true }).eq("id", q.id);
+    await getSupabase().from("hericilla_supplier_quotations").update({ is_selected: false }).eq("purchase_request_id", id);
+    await getSupabase().from("hericilla_supplier_quotations").update({ is_selected: true }).eq("id", q.id);
     void qc.invalidateQueries({ queryKey: ["pr-quotes", id] });
   }
 
@@ -129,7 +129,7 @@ export default function PurchaseRequestPage() {
     const chosen = (quotes ?? []).find((q) => q.is_selected);
     if (!chosen) return;
     const { data: po, error } = await getSupabase()
-      .from("purchase_orders")
+      .from("hericilla_purchase_orders")
       .insert({
         purchase_request_id: id,
         supplier_id: chosen.supplier_id,
@@ -149,8 +149,8 @@ export default function PurchaseRequestPage() {
       unit_cost: i.estimated_unit_cost,
       tax: 0,
     }));
-    if (src.length) await getSupabase().from("po_items").insert(src);
-    await getSupabase().from("purchase_requests").update({ status: "ordered" }).eq("id", id);
+    if (src.length) await getSupabase().from("hericilla_po_items").insert(src);
+    await getSupabase().from("hericilla_purchase_requests").update({ status: "ordered" }).eq("id", id);
     void qc.invalidateQueries({ queryKey: ["purchase-orders"] });
     router.push(`/procurement/po/${po.id}`);
   }

@@ -50,7 +50,7 @@ export default function PackingJobPage() {
   const { data: job, isPending } = useQuery({
     queryKey: ["packing-job", id],
     queryFn: async () => {
-      const { data, error } = await getSupabase().from("packing_jobs").select("*").eq("id", id).single();
+      const { data, error } = await getSupabase().from("hericilla_packing_jobs").select("*").eq("id", id).single();
       if (error) throw error;
       return data as PackingJob;
     },
@@ -59,9 +59,9 @@ export default function PackingJobPage() {
   const { data: team } = useQuery({
     queryKey: ["packing-team", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("packing_job_teams").select("*").eq("packing_job_id", id);
+      const { data } = await getSupabase().from("hericilla_packing_job_teams").select("*").eq("packing_job_id", id);
       const rows = (data as TeamRow[]) ?? [];
-      const people = await getSupabase().from("profiles").select("id, full_name").in("id", rows.length ? rows.map((r) => r.profile_id) : ["00000000-0000-0000-0000-000000000000"]);
+      const people = await getSupabase().from("hericilla_profiles").select("id, full_name").in("id", rows.length ? rows.map((r) => r.profile_id) : ["00000000-0000-0000-0000-000000000000"]);
       const names = new Map(((people.data as { id: string; full_name: string }[]) ?? []).map((p) => [p.id, p.full_name]));
       return rows.map((r) => ({ ...r, full_name: names.get(r.profile_id) ?? "Someone" }));
     },
@@ -70,7 +70,7 @@ export default function PackingJobPage() {
   const { data: vehicles } = useQuery({
     queryKey: ["packing-vehicles", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("packing_job_vehicles").select("id, equipment").eq("packing_job_id", id);
+      const { data } = await getSupabase().from("hericilla_packing_job_vehicles").select("id, equipment").eq("packing_job_id", id);
       return (data as VehicleRow[]) ?? [];
     },
   });
@@ -78,7 +78,7 @@ export default function PackingJobPage() {
   const { data: items } = useQuery({
     queryKey: ["removal-items", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("removal_items").select("*").eq("packing_job_id", id).order("box_no", { ascending: true });
+      const { data } = await getSupabase().from("hericilla_removal_items").select("*").eq("packing_job_id", id).order("box_no", { ascending: true });
       return (data as ItemRow[]) ?? [];
     },
   });
@@ -86,7 +86,7 @@ export default function PackingJobPage() {
   const { data: handovers } = useQuery({
     queryKey: ["handovers", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("handover_records").select("*").eq("packing_job_id", id).order("handed_over_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_handover_records").select("*").eq("packing_job_id", id).order("handed_over_at", { ascending: false });
       return (data as HandoverRow[]) ?? [];
     },
   });
@@ -94,33 +94,33 @@ export default function PackingJobPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("profiles").select("id, full_name").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").order("full_name");
       return (data as { id: string; full_name: string }[]) ?? [];
     },
   });
 
   async function setStage(stage: string) {
     setBusy(true);
-    await getSupabase().from("packing_jobs").update({ stage }).eq("id", id);
+    await getSupabase().from("hericilla_packing_jobs").update({ stage }).eq("id", id);
     setBusy(false);
     void qc.invalidateQueries({ queryKey: ["packing-job", id] });
   }
 
   async function addTeamMember(pid: string) {
     if (!pid) return;
-    await getSupabase().from("packing_job_teams").insert({ packing_job_id: id, profile_id: pid, role_in_job: "packer" });
+    await getSupabase().from("hericilla_packing_job_teams").insert({ packing_job_id: id, profile_id: pid, role_in_job: "packer" });
     void qc.invalidateQueries({ queryKey: ["packing-team", id] });
   }
 
   async function removeTeamMember(pid: string) {
-    await getSupabase().from("packing_job_teams").delete().eq("packing_job_id", id).eq("profile_id", pid);
+    await getSupabase().from("hericilla_packing_job_teams").delete().eq("packing_job_id", id).eq("profile_id", pid);
     void qc.invalidateQueries({ queryKey: ["packing-team", id] });
   }
 
   async function addEquipment() {
     if (!equipment.trim()) return;
     setBusy(true);
-    await getSupabase().from("packing_job_vehicles").insert({ packing_job_id: id, vehicle_id: null, equipment: equipment.trim() });
+    await getSupabase().from("hericilla_packing_job_vehicles").insert({ packing_job_id: id, vehicle_id: null, equipment: equipment.trim() });
     setEquipment("");
     setBusy(false);
     void qc.invalidateQueries({ queryKey: ["packing-vehicles", id] });
@@ -129,7 +129,7 @@ export default function PackingJobPage() {
   async function addItem() {
     if (!item.description.trim()) return;
     setBusy(true);
-    await getSupabase().from("removal_items").insert({
+    await getSupabase().from("hericilla_removal_items").insert({
       packing_job_id: id,
       description: item.description.trim(),
       box_no: item.box_no.trim() || null,
@@ -144,14 +144,14 @@ export default function PackingJobPage() {
 
   async function deleteItem() {
     if (!deleteItemId) return;
-    await getSupabase().from("removal_items").delete().eq("id", deleteItemId);
+    await getSupabase().from("hericilla_removal_items").delete().eq("id", deleteItemId);
     setDeleteItemId(null);
     void qc.invalidateQueries({ queryKey: ["removal-items", id] });
   }
 
   async function addHandover() {
     setBusy(true);
-    await getSupabase().from("handover_records").insert({
+    await getSupabase().from("hericilla_handover_records").insert({
       packing_job_id: id,
       handed_by: handover.handed_by || null,
       received_by: handover.received_by || null,

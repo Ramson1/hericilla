@@ -32,8 +32,8 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
     queryKey: ["fleet", "maintenance-schedules"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("maintenance_schedules")
-        .select("*, vehicles(reg_no)")
+        .from("hericilla_maintenance_schedules")
+        .select("*, vehicles:hericilla_vehicles(reg_no)")
         .eq("is_active", true)
         .order("next_due_date");
       return ((data as ScheduleRow[]) ?? []).map((r) => ({
@@ -47,8 +47,8 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
     queryKey: ["fleet", "maintenance-records"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("maintenance_records")
-        .select("*, vehicles(reg_no)")
+        .from("hericilla_maintenance_records")
+        .select("*, vehicles:hericilla_vehicles(reg_no)")
         .order("done_at", { ascending: false })
         .limit(100);
       return ((data as MaintRecordRow[]) ?? []).map((r) => ({
@@ -65,7 +65,7 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("maintenance_schedules").insert({
+    const { error: err } = await getSupabase().from("hericilla_maintenance_schedules").insert({
       vehicle_id: sched.vehicle_id,
       service_type: sched.service_type.trim(),
       every_km: Number(sched.every_km) || null,
@@ -91,7 +91,7 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
     setBusy(true);
     setError(null);
     const sb = getSupabase();
-    const { error: err } = await sb.from("maintenance_records").insert({
+    const { error: err } = await sb.from("hericilla_maintenance_records").insert({
       vehicle_id: rec.vehicle_id,
       service_type: rec.service_type.trim(),
       cost: Number(rec.cost) || 0,
@@ -112,7 +112,7 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (km > 0 && veh && km > Number(veh.odometer_km ?? 0)) patch.odometer_km = km;
     if (veh?.status === "maintenance") patch.status = "available";
-    await sb.from("vehicles").update(patch).eq("id", rec.vehicle_id);
+    await sb.from("hericilla_vehicles").update(patch).eq("id", rec.vehicle_id);
     setBusy(false);
     setRecOpen(false);
     setRec({ ...rec, vehicle_id: "", service_type: "", cost: "", odometer_km: "", vendor: "", notes: "" });

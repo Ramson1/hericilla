@@ -47,7 +47,7 @@ export default function ClientDetailPage() {
   const { data: client, isPending } = useQuery({
     queryKey: ["client", id],
     queryFn: async () => {
-      const { data, error } = await getSupabase().from("clients").select("*").eq("id", id).single();
+      const { data, error } = await getSupabase().from("hericilla_clients").select("*").eq("id", id).single();
       if (error) throw error;
       return data as Client;
     },
@@ -56,7 +56,7 @@ export default function ClientDetailPage() {
   const { data: contacts } = useQuery({
     queryKey: ["client-contacts", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("client_contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_client_contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false });
       return (data as Contact[]) ?? [];
     },
   });
@@ -64,7 +64,7 @@ export default function ClientDetailPage() {
   const { data: contracts } = useQuery({
     queryKey: ["client-contracts", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("client_contracts").select("*").eq("client_id", id).order("created_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_client_contracts").select("*").eq("client_id", id).order("created_at", { ascending: false });
       return (data as Contract[]) ?? [];
     },
   });
@@ -73,7 +73,7 @@ export default function ClientDetailPage() {
     queryKey: ["client-srs", id],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("service_requests")
+        .from("hericilla_service_requests")
         .select("id, ref_no, title, status, created_at")
         .eq("client_id", id)
         .is("deleted_at", null)
@@ -84,7 +84,7 @@ export default function ClientDetailPage() {
   });
 
   async function saveClient() {
-    const { error } = await getSupabase().from("clients").update(form).eq("id", id);
+    const { error } = await getSupabase().from("hericilla_clients").update(form).eq("id", id);
     if (!error) {
       setEditing(false);
       void qc.invalidateQueries({ queryKey: ["client", id] });
@@ -94,7 +94,7 @@ export default function ClientDetailPage() {
   async function addContact() {
     if (contact.full_name.trim().length < 2) return;
     setContactBusy(true);
-    await getSupabase().from("client_contacts").insert({
+    await getSupabase().from("hericilla_client_contacts").insert({
       client_id: id,
       full_name: contact.full_name.trim(),
       job_title: contact.job_title || null,
@@ -109,12 +109,12 @@ export default function ClientDetailPage() {
   }
 
   async function removeContact(c: Contact) {
-    await getSupabase().from("client_contacts").delete().eq("id", c.id);
+    await getSupabase().from("hericilla_client_contacts").delete().eq("id", c.id);
     void qc.invalidateQueries({ queryKey: ["client-contacts", id] });
   }
 
   async function archiveClient() {
-    await getSupabase().from("clients").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    await getSupabase().from("hericilla_clients").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     void qc.invalidateQueries({ queryKey: ["clients"] });
     setArchiving(false);
   }

@@ -62,7 +62,7 @@ export default function InventoryPage() {
   const { data: stock, isPending } = useQuery({
     queryKey: ["stock-levels"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("v_stock_valuation").select("*").order("name");
+      const { data } = await getSupabase().from("hericilla_stock_valuation").select("*").order("name");
       return (data as StockRow[]) ?? [];
     },
   });
@@ -71,8 +71,8 @@ export default function InventoryPage() {
     queryKey: ["stock-movements"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("stock_movements")
-        .select("*, inventory_items(name)")
+        .from("hericilla_stock_movements")
+        .select("*, inventory_items:hericilla_inventory_items(name)")
         .order("occurred_at", { ascending: false })
         .limit(200);
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
@@ -86,7 +86,7 @@ export default function InventoryPage() {
   const { data: alerts } = useQuery({
     queryKey: ["reorder-alerts"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("reorder_alerts").select("*, inventory_items(name)").order("alerted_at", { ascending: false });
+      const { data } = await getSupabase().from("hericilla_reorder_alerts").select("*, inventory_items:hericilla_inventory_items(name)").order("alerted_at", { ascending: false });
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
       return ((data as AlertRow[]) ?? []).map((r) => ({
         ...r,
@@ -105,7 +105,7 @@ export default function InventoryPage() {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("inventory_items").insert({
+    const { error: err } = await getSupabase().from("hericilla_inventory_items").insert({
       sku: newItem.sku.trim().toUpperCase(),
       name: newItem.name.trim(),
       uom: newItem.uom,
@@ -131,7 +131,7 @@ export default function InventoryPage() {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("stock_movements").insert({
+    const { error: err } = await getSupabase().from("hericilla_stock_movements").insert({
       item_id: move.item_id,
       movement_type: move.movement_type,
       quantity: Number(move.quantity),
@@ -153,7 +153,7 @@ export default function InventoryPage() {
   async function checkShortages() {
     setRefreshing(true);
     try {
-      await getSupabase().rpc("refresh_reorder_alerts");
+      await getSupabase().rpc("hericilla_refresh_reorder_alerts");
       void qc.invalidateQueries({ queryKey: ["reorder-alerts"] });
     } finally {
       setRefreshing(false);

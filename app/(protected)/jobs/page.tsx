@@ -64,8 +64,8 @@ export default function JobsPage() {
     queryKey: ["service-requests"],
     queryFn: async () => {
       const { data, error: err } = await getSupabase()
-        .from("service_requests")
-        .select("id, ref_no, title, service_type, priority, status, deadline, created_at, clients(name)")
+        .from("hericilla_service_requests")
+        .select("id, ref_no, title, service_type, priority, status, deadline, created_at, clients:hericilla_clients(name)")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(200);
@@ -82,7 +82,7 @@ export default function JobsPage() {
   const { data: clients } = useQuery({
     queryKey: ["clients-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("clients").select("id, name").is("deleted_at", null).order("name");
+      const { data } = await getSupabase().from("hericilla_clients").select("id, name").is("deleted_at", null).order("name");
       return (data as { id: string; name: string }[]) ?? [];
     },
     enabled: creating,
@@ -91,7 +91,7 @@ export default function JobsPage() {
   const { data: departments } = useQuery({
     queryKey: ["departments"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("departments").select("id, name").order("name");
+      const { data } = await getSupabase().from("hericilla_departments").select("id, name").order("name");
       return (data as { id: string; name: string }[]) ?? [];
     },
     enabled: creating,
@@ -100,7 +100,7 @@ export default function JobsPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("profiles").select("id, full_name, role").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name, role").eq("status", "active").order("full_name");
       return (data as { id: string; full_name: string; role: string }[]) ?? [];
     },
     enabled: creating,
@@ -119,7 +119,7 @@ export default function JobsPage() {
   async function createSr() {
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("service_requests").insert({
+    const { error: err } = await getSupabase().from("hericilla_service_requests").insert({
       client_id: form.client_id || null,
       service_type: form.service_type,
       title: form.title.trim(),

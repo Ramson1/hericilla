@@ -51,8 +51,8 @@ export default function PackingPage() {
     queryKey: ["packing-jobs"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("packing_jobs")
-        .select("*, work_orders(wo_number)")
+        .from("hericilla_packing_jobs")
+        .select("*, work_orders:hericilla_work_orders(wo_number)")
         .order("created_at", { ascending: false })
         .limit(200);
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
@@ -67,8 +67,8 @@ export default function PackingPage() {
     queryKey: ["work-orders-open"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("work_orders")
-        .select("id, wo_number, service_type, clients(name)")
+        .from("hericilla_work_orders")
+        .select("id, wo_number, service_type, clients:hericilla_clients(name)")
         .in("status", ["new", "quoted", "approved", "assigned", "in_progress"])
         .order("created_at", { ascending: false });
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
@@ -85,7 +85,7 @@ export default function PackingPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("profiles").select("id, full_name").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").order("full_name");
       return (data as { id: string; full_name: string }[]) ?? [];
     },
     enabled: creating,
@@ -102,7 +102,7 @@ export default function PackingPage() {
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("packing_jobs").insert({
+    const { error: err } = await getSupabase().from("hericilla_packing_jobs").insert({
       work_order_id: form.work_order_id,
       origin_address: form.origin_address.trim(),
       destination_address: form.destination_address.trim(),

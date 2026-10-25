@@ -52,7 +52,7 @@ export default function InboxPage() {
   const { data: rows, isPending } = useQuery({
     queryKey: ["enquiries"],
     queryFn: async () => {
-      let q = getSupabase().from("enquiries").select("*").order("created_at", { ascending: false }).limit(200);
+      let q = getSupabase().from("hericilla_enquiries").select("*").order("created_at", { ascending: false }).limit(200);
       const { data } = await q;
       return (data as Enq[]) ?? [];
     },
@@ -61,7 +61,7 @@ export default function InboxPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("profiles").select("id, full_name").in("role", ["admin", "super_admin", "supervisor", "procurement_officer", "logistics_officer", "finance_officer", "hr_officer"]).order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").in("role", ["admin", "super_admin", "supervisor", "procurement_officer", "logistics_officer", "finance_officer", "hr_officer"]).order("full_name");
       return (data as { id: string; full_name: string }[]) ?? [];
     },
   });
@@ -71,7 +71,7 @@ export default function InboxPage() {
 
   async function patch(id: string, body: Partial<Enq>) {
     setBusy(true);
-    await getSupabase().from("enquiries").update(body).eq("id", id);
+    await getSupabase().from("hericilla_enquiries").update(body).eq("id", id);
     setBusy(false);
     void qc.invalidateQueries({ queryKey: ["enquiries"] });
   }
@@ -79,7 +79,7 @@ export default function InboxPage() {
   async function convertToSr(e: Enq, serviceType: ServiceType) {
     setBusy(true);
     const { data: sr, error } = await getSupabase()
-      .from("service_requests")
+      .from("hericilla_service_requests")
       .insert({
         enquiry_id: e.id,
         origin: "website",
@@ -93,7 +93,7 @@ export default function InboxPage() {
       .select("id")
       .single();
     if (!error && sr) {
-      await getSupabase().from("enquiries").update({ status: "in_progress", converted_to_service_request_id: sr.id }).eq("id", e.id);
+      await getSupabase().from("hericilla_enquiries").update({ status: "in_progress", converted_to_service_request_id: sr.id }).eq("id", e.id);
     }
     setBusy(false);
     void qc.invalidateQueries({ queryKey: ["enquiries"] });

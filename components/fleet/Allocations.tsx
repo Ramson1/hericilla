@@ -52,8 +52,8 @@ export function AllocationsPanel({
     queryKey: ["fleet", "allocations"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("vehicle_allocations")
-        .select("*, vehicles(reg_no), driver:profiles!vehicle_allocations_driver_id_fkey(full_name), work_orders(wo_number), sites(name)")
+        .from("hericilla_vehicle_allocations")
+        .select("*, vehicles:hericilla_vehicles(reg_no), driver:hericilla_profiles!vehicle_allocations_driver_id_fkey(full_name), work_orders:hericilla_work_orders(wo_number), sites:hericilla_sites(name)")
         .order("valid_from", { ascending: false })
         .limit(200);
       return ((data as AllocationRow[]) ?? []).map((r) => {
@@ -81,7 +81,7 @@ export function AllocationsPanel({
     setBusy(true);
     setError(null);
     const sb = getSupabase();
-    const { error: err } = await sb.from("vehicle_allocations").insert({
+    const { error: err } = await sb.from("hericilla_vehicle_allocations").insert({
       vehicle_id: form.vehicle_id,
       driver_id: form.driver_id,
       work_order_id: form.work_order_id || null,
@@ -102,7 +102,7 @@ export function AllocationsPanel({
     }
     const veh = vehicles.find((v) => v.id === form.vehicle_id);
     if (veh && veh.status === "available") {
-      await sb.from("vehicles").update({ status: "allocated", updated_at: new Date().toISOString() }).eq("id", veh.id);
+      await sb.from("hericilla_vehicles").update({ status: "allocated", updated_at: new Date().toISOString() }).eq("id", veh.id);
     }
     setBusy(false);
     setOpen(false);
@@ -113,13 +113,13 @@ export function AllocationsPanel({
   async function release(a: AllocationRow) {
     const sb = getSupabase();
     const { error: err } = await sb
-      .from("vehicle_allocations")
+      .from("hericilla_vehicle_allocations")
       .update({ released_at: new Date().toISOString() })
       .eq("id", a.id);
     if (!err) {
       const veh = vehicles.find((v) => v.id === a.vehicle_id);
       if (veh && (veh.status === "allocated" || veh.status === "in_use")) {
-        await sb.from("vehicles").update({ status: "available", updated_at: new Date().toISOString() }).eq("id", veh.id);
+        await sb.from("hericilla_vehicles").update({ status: "available", updated_at: new Date().toISOString() }).eq("id", veh.id);
       }
     }
     void qc.invalidateQueries({ queryKey: ["fleet"] });

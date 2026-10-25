@@ -39,8 +39,8 @@ export function MovementsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
     queryKey: ["fleet", "movements"],
     queryFn: async () => {
       const { data } = await getSupabase()
-        .from("vehicle_movements")
-        .select("*, vehicles(reg_no), profiles(full_name)")
+        .from("hericilla_vehicle_movements")
+        .select("*, vehicles:hericilla_vehicles(reg_no), profiles:hericilla_profiles(full_name)")
         .order("occurred_at", { ascending: false })
         .limit(200);
       return ((data as MovementRow[]) ?? []).map((r) => {
@@ -62,7 +62,7 @@ export function MovementsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
     setBusy(true);
     setError(null);
     const sb = getSupabase();
-    const { error: err } = await sb.from("vehicle_movements").insert({
+    const { error: err } = await sb.from("hericilla_vehicle_movements").insert({
       vehicle_id: form.vehicle_id,
       movement_type: form.movement_type,
       odometer_km: Number(form.odometer_km) || null,
@@ -79,7 +79,7 @@ export function MovementsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
     const km = Number(form.odometer_km);
     const veh = vehicles.find((v) => v.id === form.vehicle_id);
     if (km > 0 && veh && km > Number(veh.odometer_km ?? 0)) {
-      await sb.from("vehicles").update({ odometer_km: km, updated_at: new Date().toISOString() }).eq("id", veh.id);
+      await sb.from("hericilla_vehicles").update({ odometer_km: km, updated_at: new Date().toISOString() }).eq("id", veh.id);
     }
     setBusy(false);
     setOpen(false);

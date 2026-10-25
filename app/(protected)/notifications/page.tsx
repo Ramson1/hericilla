@@ -32,7 +32,7 @@ export default function NotificationsPage() {
     queryKey: ["my-notifications", profile?.id],
     queryFn: async () => {
       const { data: rows } = await getSupabase()
-        .from("notification_outbox")
+        .from("hericilla_notification_outbox")
         .select("*")
         .or(`recipient_user_id.eq.${profile?.id},role_target.eq.${profile?.role}`)
         .order("created_at", { ascending: false })
@@ -40,7 +40,7 @@ export default function NotificationsPage() {
       const list = (rows as OutboxRow[]) ?? [];
       if (list.length === 0) return [];
       const { data: seenRows } = await getSupabase()
-        .from("notifications_seen")
+        .from("hericilla_notifications_seen")
         .select("outbox_id")
         .eq("user_id", profile!.id)
         .in("outbox_id", list.map((r) => r.id));
@@ -51,7 +51,7 @@ export default function NotificationsPage() {
   });
 
   async function markSeen(id: string) {
-    await getSupabase().from("notifications_seen").upsert({ outbox_id: id, user_id: profile!.id }, { onConflict: "outbox_id,user_id" });
+    await getSupabase().from("hericilla_notifications_seen").upsert({ outbox_id: id, user_id: profile!.id }, { onConflict: "outbox_id,user_id" });
     void qc.invalidateQueries({ queryKey: ["my-notifications", profile?.id] });
   }
 
@@ -59,7 +59,7 @@ export default function NotificationsPage() {
     const unread = (data ?? []).filter((r) => !r.seen);
     if (unread.length === 0) return;
     await getSupabase()
-      .from("notifications_seen")
+      .from("hericilla_notifications_seen")
       .upsert(unread.map((r) => ({ outbox_id: r.id, user_id: profile!.id })), { onConflict: "outbox_id,user_id" });
     void qc.invalidateQueries({ queryKey: ["my-notifications", profile?.id] });
   }

@@ -162,10 +162,10 @@ export default function DocumentsPage() {
 
       {expiring.length > 0 && (
         <div className="mt-6 rounded-[var(--radius-card)] border-2 border-danger-600 bg-white p-5">
-          <h2 className="text-xl font-bold text-danger-800">Expiring soon</h2>
+          <h2 className="text-lg font-bold text-danger-800">Expiring soon</h2>
           <div className="mt-3 space-y-2">
             {expiring.map((d) => (
-              <div key={d.id} className="flex items-center justify-between gap-3 text-lg py-1 border-b border-[var(--color-line)] last:border-0">
+              <div key={d.id} className="flex items-center justify-between gap-3 text-base py-1 border-b border-[var(--color-line)] last:border-0">
                 <span>{d.title}</span>
                 <span className={daysUntil(d.expiry_date!) < 0 ? "font-bold text-danger-800" : "font-bold text-warning-800"}>
                   {daysUntil(d.expiry_date!) < 0 ? `expired ${d.expiry_date}` : `${daysUntil(d.expiry_date!)} days left (${d.expiry_date})`}
@@ -242,14 +242,14 @@ export default function DocumentsPage() {
             />
           </div>
           <div>
-            <p className="text-lg font-semibold mb-2">The file itself</p>
+            <p className="text-base font-semibold mb-2">The file itself</p>
             <input
               ref={fileRef}
               type="file"
-              className="text-lg"
+              className="text-base"
             />
           </div>
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setUploadOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void upload()}>{busy ? "Uploading…" : "Upload & save"}</BigButton>

@@ -141,7 +141,7 @@ function PodsPanel() {
     <div className="space-y-4">
       {error ? <p className="rounded-xl bg-danger-100 p-4 font-semibold text-danger-800">{error}</p> : null}
 
-      <h2 className="text-xl font-extrabold text-brand-950">Waiting for verification ({pendingList.length})</h2>
+      <h2 className="text-lg font-extrabold text-brand-950">Waiting for verification ({pendingList.length})</h2>
       {pendingList.length === 0 ? (
         <EmptyState
           title="No deliveries waiting for you"
@@ -153,7 +153,7 @@ function PodsPanel() {
 
       {doneList.length > 0 ? (
         <>
-          <h2 className="pt-4 text-xl font-extrabold text-brand-950">Already verified ({doneList.length})</h2>
+          <h2 className="pt-4 text-lg font-extrabold text-brand-950">Already verified ({doneList.length})</h2>
           {doneList.map((pod) => (
             <RowCard
               key={pod.id}
@@ -205,7 +205,7 @@ function PodCard({ pod, onVerify, busy }: { pod: PodRow; onVerify: () => void; b
     <div className={`rounded-2xl border-2 p-5 space-y-3 ${problem ? "border-danger-300 bg-danger-100/40" : "border-[var(--color-line)] bg-white"}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-lg font-extrabold text-brand-950">{pod.job_ref ?? "Unknown job"}</p>
+          <p className="text-base font-extrabold text-brand-950">{pod.job_ref ?? "Unknown job"}</p>
           <p className="text-base text-ink-soft">
             Received by <span className="font-bold">{pod.recipient_name ?? "not stated"}</span> on {new Date(pod.delivered_at).toLocaleString()}
             {pod.driver_name ? ` · delivered by ${pod.driver_name}` : ""}
@@ -351,7 +351,7 @@ function ExpensesPanel() {
 
       <Modal open={rejecting != null} title={`Reject ${statusLabel(rejecting?.expense_type ?? "")} of ${money(Number(rejecting?.amount ?? 0))}?`} onClose={() => setRejecting(null)}>
         <div className="space-y-4">
-          <p className="text-lg text-ink-soft">Tell the driver why — they will see this on their phone when it syncs.</p>
+          <p className="text-base text-ink-soft">Tell the driver why — they will see this on their phone when it syncs.</p>
           <BigTextarea label="Reason (required)" value={reason} onChange={(ev) => setReason(ev.target.value)} />
           <BigButton
             variant="danger"

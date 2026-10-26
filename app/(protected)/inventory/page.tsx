@@ -242,7 +242,7 @@ export default function InventoryPage() {
         <div className="mt-6">
           <Card>
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-lg">Alerts are worked out from the stock ledger. Press the button to check for shortages now.</p>
+              <p className="text-base">Alerts are worked out from the stock ledger. Press the button to check for shortages now.</p>
               <BigButton size="md" variant="secondary" disabled={refreshing} onClick={() => void checkShortages()}>
                 {refreshing ? "Checking…" : "Check for shortages"}
               </BigButton>
@@ -282,7 +282,7 @@ export default function InventoryPage() {
             <BigInput label="Warn me when below" type="number" value={newItem.min_stock_level} onChange={(e) => setNewItem({ ...newItem, min_stock_level: e.target.value })} />
             <BigInput label="Order this much" type="number" value={newItem.reorder_qty} onChange={(e) => setNewItem({ ...newItem, reorder_qty: e.target.value })} />
           </div>
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setItemOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void createItem()}>{busy ? "Saving…" : "Save item"}</BigButton>
@@ -312,7 +312,7 @@ export default function InventoryPage() {
             <BigInput label="Transferred to (location)" value={move.to_location} onChange={(e) => setMove({ ...move, to_location: e.target.value })} />
           )}
           <BigInput label="Why / for which job (optional)" value={move.note} onChange={(e) => setMove({ ...move, note: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setMoveOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void recordMovement()}>{busy ? "Saving…" : "Save movement"}</BigButton>

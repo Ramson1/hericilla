@@ -119,7 +119,7 @@ export function IncidentsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-lg text-ink-soft">
+        <p className="text-base text-ink-soft">
           {openCount > 0 ? <span className="font-semibold text-danger-800">{openCount} incident(s) still open.</span> : "All incidents are resolved."}
         </p>
         <BigButton onClick={() => { setError(null); setOpen(true); }}>+ Report incident</BigButton>
@@ -182,7 +182,7 @@ export function IncidentsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
             <BigInput label="Where (optional)" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
           </div>
           <BigTextarea label="What happened?" required rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void report()}>{busy ? "Saving…" : "Report incident"}</BigButton>
@@ -192,9 +192,9 @@ export function IncidentsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
 
       <Modal open={resolving !== null} title="Resolve incident" onClose={() => { setResolving(null); setError(null); }}>
         <div className="space-y-5">
-          <p className="text-lg">Write what was done to close this incident — e.g. vehicle repaired, insurance claim filed, driver counselled.</p>
+          <p className="text-base">Write what was done to close this incident — e.g. vehicle repaired, insurance claim filed, driver counselled.</p>
           <BigTextarea label="Resolution note" required rows={4} value={resolution} onChange={(e) => setResolution(e.target.value)} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setResolving(null)}>Cancel</BigButton>
             <BigButton variant="success" onClick={() => void resolve()}>Mark resolved</BigButton>

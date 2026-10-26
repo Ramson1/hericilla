@@ -127,9 +127,9 @@ export default function PurchaseOrderPage() {
       <Card className="mt-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <StatusBadge status={po.status} />
-          <p className="text-lg font-bold">Total: {money(grand)}</p>
+          <p className="text-base font-bold">Total: {money(grand)}</p>
         </div>
-        <p className="mt-2 text-lg text-ink-soft">
+        <p className="mt-2 text-base text-ink-soft">
           {supplier?.name}{supplier?.phone ? ` · ${supplier.phone}` : ""}{po.expected_delivery_date ? ` · expected ${new Date(po.expected_delivery_date).toLocaleDateString()}` : ""}
         </p>
 
@@ -137,7 +137,7 @@ export default function PurchaseOrderPage() {
           {(items ?? []).map((it) => (
             <div key={it.id} className="grid gap-2 sm:grid-cols-[1fr_90px_140px_auto] items-end">
               <div>
-                <p className="text-lg font-semibold">{it.material}</p>
+                <p className="text-base font-semibold">{it.material}</p>
                 <p className="text-base text-ink-soft">{Number(it.quantity)} {it.unit} · line {money(it.line_total)}</p>
               </div>
               <div />
@@ -164,7 +164,7 @@ export default function PurchaseOrderPage() {
 
       <Modal open={grnOpen} title="Record goods received" onClose={() => setGrnOpen(false)}>
         <div className="space-y-5">
-          <p className="text-lg">Did everything arrive in good condition?</p>
+          <p className="text-base">Did everything arrive in good condition?</p>
           <div className="grid gap-5 sm:grid-cols-2">
             <BigInput label="Condition" value={grn.condition_ok === "yes" ? "All good" : "Issues"} onChange={() => undefined} />
             <BigInput label="Notes" value={grn.notes} onChange={(e) => setGrn({ ...grn, notes: e.target.value })} />

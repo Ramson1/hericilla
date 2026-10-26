@@ -190,7 +190,7 @@ export function RegisterPanel({ vehicles }: { vehicles: VehicleRow[] }) {
             <BigInput label="Inspection expires" type="date" value={form.inspection_expiry} onChange={(e) => setForm({ ...form, inspection_expiry: e.target.value })} />
           </div>
           <BigTextarea label="Notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void save()}>{busy ? "Saving…" : editing ? "Save changes" : "Add vehicle"}</BigButton>

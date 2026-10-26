@@ -132,7 +132,7 @@ export default function ChatInboxPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[360px_1fr] min-h-[60vh]">
         {/* Thread list */}
         <Card className="p-0 overflow-hidden">
-          <p className="border-b border-[var(--color-line)] p-4 text-lg font-bold text-brand-950">Conversations</p>
+          <p className="border-b border-[var(--color-line)] p-4 text-base font-bold text-brand-950">Conversations</p>
           <div className="max-h-[70vh] overflow-y-auto">
             {isPending ? (
               <div className="space-y-3 p-4">
@@ -153,7 +153,7 @@ export default function ChatInboxPage() {
                   className={`w-full text-left p-4 border-b border-[var(--color-line)] last:border-0 hover:bg-surface ${openThread === t.id ? "bg-brand-100" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-lg font-bold text-brand-950">{t.visitor_name || "Website visitor"}</p>
+                    <p className="text-base font-bold text-brand-950">{t.visitor_name || "Website visitor"}</p>
                     <StatusBadge status={t.status === "open" && t.last_message_sender === "visitor" ? "new" : t.status} />
                   </div>
                   <p className="text-base text-ink-soft">
@@ -173,7 +173,7 @@ export default function ChatInboxPage() {
           ) : (
             <>
               <div className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] p-4">
-                <p className="text-lg font-bold text-brand-950">
+                <p className="text-base font-bold text-brand-950">
                   {(threads ?? []).find((t) => t.id === openThread)?.visitor_name || "Website visitor"}
                 </p>
                 <BigButton size="md" variant="secondary" onClick={() => void closeThread(openThread)}>
@@ -184,7 +184,7 @@ export default function ChatInboxPage() {
                 {(messages ?? []).map((m) => (
                   <div key={m.id} className={`flex ${m.sender_role === "agent" ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 text-lg ${
+                      className={`max-w-[80%] rounded-2xl px-4 py-3 text-base ${
                         m.sender_role === "agent" ? "bg-brand-700 text-white" : "bg-surface text-ink border border-[var(--color-line)]"
                       }`}
                     >

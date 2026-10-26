@@ -83,8 +83,8 @@ export function InspectionsPanel() {
         <div className="flex justify-end">
           <BigButton variant="secondary" onClick={() => { setError(null); setOpen(true); }}>+ New checklist</BigButton>
         </div>
-        <h2 className="mt-2 text-2xl font-bold text-brand-950">Checklist templates</h2>
-        <p className="text-lg text-ink-soft">Drivers work through these before (pre) and after (post) every trip in the driver app.</p>
+        <h2 className="mt-2 text-xl font-bold text-brand-950">Checklist templates</h2>
+        <p className="text-base text-ink-soft">Drivers work through these before (pre) and after (post) every trip in the driver app.</p>
         {(checklists ?? []).length === 0 ? (
           <EmptyState title="No checklists yet" teach="Press “+ New checklist” to build the first pre-trip check." />
         ) : (
@@ -101,7 +101,7 @@ export function InspectionsPanel() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-bold text-brand-950">Driver submissions ({results?.length ?? 0})</h2>
+        <h2 className="text-xl font-bold text-brand-950">Driver submissions ({results?.length ?? 0})</h2>
         {isPending ? (
           <div className="mt-3 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
         ) : (results ?? []).length === 0 ? (
@@ -154,7 +154,7 @@ export function InspectionsPanel() {
             />
           </div>
           <BigTextarea label="Check items — one per line" rows={8} value={form.items} onChange={(e) => setForm({ ...form, items: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void createChecklist()}>{busy ? "Saving…" : "Save checklist"}</BigButton>

@@ -139,7 +139,7 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
       ) : (
         <div className="mt-4 space-y-8">
           <section>
-            <h2 className="text-2xl font-bold text-brand-950">Service schedules ({schedules?.length ?? 0})</h2>
+            <h2 className="text-xl font-bold text-brand-950">Service schedules ({schedules?.length ?? 0})</h2>
             {(schedules ?? []).length === 0 ? (
               <EmptyState title="No schedules yet" teach="Press “+ New schedule” to set when each truck needs oil changes, tyres or inspection." />
             ) : (
@@ -173,8 +173,8 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
 
           <section>
             <div className="flex items-baseline gap-3">
-              <h2 className="text-2xl font-bold text-brand-950">Workshop history ({records?.length ?? 0})</h2>
-              <span className="text-lg text-ink-soft">Total spent: {money(totalSpend)}</span>
+              <h2 className="text-xl font-bold text-brand-950">Workshop history ({records?.length ?? 0})</h2>
+              <span className="text-base text-ink-soft">Total spent: {money(totalSpend)}</span>
             </div>
             {(records ?? []).length === 0 ? (
               <EmptyState title="No maintenance recorded yet" teach="When a vehicle comes back from the workshop, press “+ Record service done”." />
@@ -212,7 +212,7 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
             <BigInput label="Repeat every (days)" type="number" value={sched.every_days} onChange={(e) => setSched({ ...sched, every_days: e.target.value })} />
             <BigInput label="Next due at (km)" type="number" value={sched.next_due_km} onChange={(e) => setSched({ ...sched, next_due_km: e.target.value })} />
           </div>
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setSchedOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void addSchedule()}>{busy ? "Saving…" : "Save schedule"}</BigButton>
@@ -233,7 +233,7 @@ export function MaintenancePanel({ vehicles }: { vehicles: VehicleRow[] }) {
             <BigInput label="Workshop / vendor" value={rec.vendor} onChange={(e) => setRec({ ...rec, vendor: e.target.value })} />
           </div>
           <BigInput label="Notes (optional)" value={rec.notes} onChange={(e) => setRec({ ...rec, notes: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setRecOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void addRecord()}>{busy ? "Saving…" : "Save record"}</BigButton>

@@ -155,8 +155,8 @@ export default function PackingPage() {
       ) : (
         <>
           <section className="mt-6 space-y-3">
-            <h2 className="text-xl font-bold text-brand-950">Ongoing ({active.length})</h2>
-            {active.length === 0 && <p className="text-lg text-ink-soft">Nothing in progress right now.</p>}
+            <h2 className="text-lg font-bold text-brand-950">Ongoing ({active.length})</h2>
+            {active.length === 0 && <p className="text-base text-ink-soft">Nothing in progress right now.</p>}
             {active.map((j) => (
               <RowCard
                 key={j.id}
@@ -169,7 +169,7 @@ export default function PackingPage() {
           </section>
           {done.length > 0 && (
             <section className="mt-10 space-y-3">
-              <h2 className="text-xl font-bold text-brand-950">Completed ({done.length})</h2>
+              <h2 className="text-lg font-bold text-brand-950">Completed ({done.length})</h2>
               {done.map((j) => (
                 <RowCard
                   key={j.id}
@@ -206,7 +206,7 @@ export default function PackingPage() {
                     }))}
                   />
                   {(openWos ?? []).length === 0 && (
-                    <p className="text-lg text-warning-800">No open work orders yet. Approve a quotation on the Jobs page first.</p>
+                    <p className="text-base text-warning-800">No open work orders yet. Approve a quotation on the Jobs page first.</p>
                   )}
                   <BigInput
                     label="Planned moving date (optional)"
@@ -252,7 +252,7 @@ export default function PackingPage() {
                     value={form.notes}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   />
-                  {error && <p className="text-lg text-danger-800">{error}</p>}
+                  {error && <p className="text-base text-danger-800">{error}</p>}
                 </div>
               ),
             },

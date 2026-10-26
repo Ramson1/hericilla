@@ -241,7 +241,7 @@ export default function SuppliersPage() {
         </div>
       </Modal>
 
-      <p className="mt-6 text-lg">
+      <p className="mt-6 text-base">
         Need to raise a purchase?{" "}
         <Link href="/procurement" className="font-semibold text-brand-700 underline">
           Go to Procurement →

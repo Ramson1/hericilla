@@ -149,7 +149,7 @@ export function MovementsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
             <BigInput label="Odometer (km) — optional" type="number" value={form.odometer_km} onChange={(e) => setForm({ ...form, odometer_km: e.target.value })} />
             <BigInput label="Where (note)" value={form.location_note} onChange={(e) => setForm({ ...form, location_note: e.target.value })} hint="e.g. Abuloma yard, Trans-Amadi, fuel stop at Eagles Mall" />
           </div>
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void log()}>{busy ? "Saving…" : "Save movement"}</BigButton>

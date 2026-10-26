@@ -396,7 +396,7 @@ export default function PayrollPage() {
         <BigButton size="md" variant={tab === "structures" ? "primary" : "secondary"} onClick={() => setTab("structures")}>Salary structures ({(structures ?? []).filter((s) => s.is_current).length})</BigButton>
       </div>
 
-      {error && <p className="mt-4 text-lg font-semibold text-danger-800">{error}</p>}
+      {error && <p className="mt-4 text-base font-semibold text-danger-800">{error}</p>}
 
       {tab === "runs" &&
         (isPending ? (
@@ -508,7 +508,7 @@ export default function PayrollPage() {
               valid: true,
               content: (
                 <div className="space-y-5">
-                  <p className="text-lg">
+                  <p className="text-base">
                     Creating a <strong>draft</strong> run for <strong>{monthLabel(`${period}-01`)}</strong> for{" "}
                     {(structures ?? []).filter((s) => s.is_current).length} people with salary structures.
                   </p>
@@ -532,14 +532,14 @@ export default function PayrollPage() {
           {openRun && (
             <div className="flex items-center gap-3 flex-wrap">
               <StatusBadge status={openRun.status} />
-              <p className="text-lg">
+              <p className="text-base">
                 {money(openRun.total_net)} net for {(payslips ?? []).length} people
                 {openRun.status === "paid" && openRun.paid_at ? ` · closed ${new Date(openRun.paid_at).toLocaleDateString()}` : ""}
               </p>
             </div>
           )}
           {(payslips ?? []).length === 0 ? (
-            <p className="text-lg text-ink-soft">No payslips in this run yet.</p>
+            <p className="text-base text-ink-soft">No payslips in this run yet.</p>
           ) : (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
               {(payslips ?? []).map((p) => (
@@ -589,7 +589,7 @@ export default function PayrollPage() {
             <BigInput label="Date paid" type="date" value={pay.paid_at} onChange={(e) => setPay({ ...pay, paid_at: e.target.value })} />
           </div>
           <BigInput label="Transfer / receipt reference (optional)" value={pay.reference} onChange={(e) => setPay({ ...pay, reference: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setPaying(null)}>Cancel</BigButton>
             <BigButton variant="success" onClick={() => void markPaid()}>Save payment</BigButton>
@@ -601,7 +601,7 @@ export default function PayrollPage() {
       <Modal open={structOpen} title={editing ? `Salary — ${editing.employee_name ?? "employee"}` : "New salary structure"} onClose={() => setStructOpen(false)} wide>
         <div className="space-y-5">
           {editing ? (
-            <p className="text-lg">{editing.employee_name} · {statusLabel(editing.employee_role ?? "")}</p>
+            <p className="text-base">{editing.employee_name} · {statusLabel(editing.employee_role ?? "")}</p>
           ) : (
             <BigSelect
               label="Which employee?"
@@ -619,7 +619,7 @@ export default function PayrollPage() {
 
           <Card>
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-brand-950">Allowances</h3>
+              <h3 className="text-lg font-bold text-brand-950">Allowances</h3>
               <BigButton size="md" variant="secondary" onClick={() => setForm({ ...form, allowances: [...form.allowances, { name: "", amount: "" }] })}>+ Add allowance</BigButton>
             </div>
             <div className="mt-3 space-y-3">
@@ -636,7 +636,7 @@ export default function PayrollPage() {
 
           <Card>
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-brand-950">Deductions</h3>
+              <h3 className="text-lg font-bold text-brand-950">Deductions</h3>
               <BigButton size="md" variant="secondary" onClick={() => setForm({ ...form, deductions: [...form.deductions, { name: "", mode: "amount", value: "" }] })}>+ Add deduction</BigButton>
             </div>
             <div className="mt-3 space-y-3">
@@ -657,7 +657,7 @@ export default function PayrollPage() {
             </div>
           </Card>
 
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setStructOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void saveStructure()}>{busy ? "Saving…" : editing ? "Save changes" : "Save structure"}</BigButton>

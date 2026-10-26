@@ -89,13 +89,13 @@ export default function NotificationsPage() {
 
       {supported && subscribed !== true && (
         <div className="mt-6 rounded-[var(--radius-card)] bg-brand-100 p-5 flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-lg text-brand-950">Want a pop-up even when this tab is closed? Turn on browser notifications.</p>
+          <p className="text-base text-brand-950">Want a pop-up even when this tab is closed? Turn on browser notifications.</p>
           <BigButton onClick={() => void enableNotifications()}>Turn on notifications</BigButton>
           {pushError && <p className="text-base text-danger-800 w-full">{pushError}</p>}
         </div>
       )}
       {subscribed === true && (
-        <p className="mt-6 text-lg text-success-800">✓ Browser notifications are on for this device.</p>
+        <p className="mt-6 text-base text-success-800">✓ Browser notifications are on for this device.</p>
       )}
 
       {isPending ? (

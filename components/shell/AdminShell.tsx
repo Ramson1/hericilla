@@ -80,7 +80,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <div className="p-5">
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image src="/logo.png" alt="" width={40} height={40} className="rounded-lg" />
-            <span className="text-lg font-extrabold leading-tight">
+            <span className="text-base font-extrabold leading-tight">
               Hericilla
               <span className="block text-xs font-medium text-brand-200">Admin portal</span>
             </span>
@@ -91,7 +91,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Link
               key={n.href}
               href={n.href}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-lg font-semibold transition ${
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold transition ${
                 isActive(n.href) ? "bg-white text-brand-950" : "hover:bg-brand-900"
               }`}
             >
@@ -187,8 +187,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
 export function EnvNotice({ title, body }: { title: string; body: string }) {
   return (
     <div className="mx-auto max-w-xl p-8 text-center">
-      <h1 className="text-2xl font-bold text-brand-950">{title}</h1>
-      <p className="mt-3 text-lg text-ink-soft">{body}</p>
+      <h1 className="text-xl font-bold text-brand-950">{title}</h1>
+      <p className="mt-3 text-base text-ink-soft">{body}</p>
     </div>
   );
 }

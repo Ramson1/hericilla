@@ -209,14 +209,14 @@ export default function InvoicePage() {
       <Card className="mt-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <StatusBadge status={invoice.status} />
-          <p className="text-lg font-bold">Total: {money(invoice.total)}</p>
+          <p className="text-base font-bold">Total: {money(invoice.total)}</p>
         </div>
-        <dl className="mt-3 grid gap-2 sm:grid-cols-3 text-lg">
+        <dl className="mt-3 grid gap-2 sm:grid-cols-3 text-base">
           <div><dt className="text-ink-soft">Issued</dt><dd className="font-semibold">{new Date(invoice.issue_date).toLocaleDateString()}</dd></div>
           <div><dt className="text-ink-soft">Due by</dt><dd className="font-semibold">{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : "—"}</dd></div>
           <div><dt className="text-ink-soft">Outstanding</dt><dd className={"font-bold " + (outstanding > 0 ? "text-danger-800" : "text-success-800")}>{money(outstanding)}</dd></div>
         </dl>
-        {invoice.notes && <p className="mt-3 text-lg rounded-xl bg-surface p-4">{invoice.notes}</p>}
+        {invoice.notes && <p className="mt-3 text-base rounded-xl bg-surface p-4">{invoice.notes}</p>}
         <div className="mt-5 flex flex-wrap gap-3">
           {isFinance && invoice.status === "draft" && <BigButton variant="success" disabled={busy} onClick={() => void setStatus("sent")}>Send to client</BigButton>}
           {isFinance && ["sent", "partial", "overdue"].includes(invoice.status) && <BigButton variant="primary" onClick={() => setPayOpen(true)}>Record payment</BigButton>}
@@ -228,38 +228,38 @@ export default function InvoicePage() {
       {/* Lines */}
       <Card className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-brand-950">Charges</h2>
+          <h2 className="text-lg font-bold text-brand-950">Charges</h2>
           {isFinance && invoice.status === "draft" && <BigButton size="md" onClick={() => setLineOpen(true)}>+ Add line</BigButton>}
         </div>
         <div className="mt-3 space-y-2">
-          {(items ?? []).length === 0 && <p className="text-lg text-ink-soft">No lines yet.</p>}
+          {(items ?? []).length === 0 && <p className="text-base text-ink-soft">No lines yet.</p>}
           {(items ?? []).map((l) => (
             <div key={l.id} className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] last:border-0 py-2">
               <div>
-                <p className="text-lg font-semibold">{l.description}</p>
+                <p className="text-base font-semibold">{l.description}</p>
                 <p className="text-base text-ink-soft">{Number(l.quantity)} × {money(l.unit_price)}</p>
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-lg font-bold">{money(l.amount)}</p>
+                <p className="text-base font-bold">{money(l.amount)}</p>
                 {isFinance && invoice.status === "draft" && (
                   <BigButton size="md" variant="ghost" className="text-danger-800" onClick={() => void removeLine(l.id)}>✕</BigButton>
                 )}
               </div>
             </div>
           ))}
-          <p className="text-lg pt-2 text-right">Subtotal {money(invoice.subtotal)} + {invoice.tax_rate}% tax = <strong>{money(invoice.total)}</strong></p>
+          <p className="text-base pt-2 text-right">Subtotal {money(invoice.subtotal)} + {invoice.tax_rate}% tax = <strong>{money(invoice.total)}</strong></p>
         </div>
       </Card>
 
       {/* Payments */}
       <Card className="mt-6">
-        <h2 className="text-xl font-bold text-brand-950">Payments received</h2>
+        <h2 className="text-lg font-bold text-brand-950">Payments received</h2>
         <div className="mt-3 space-y-2">
-          {(payments ?? []).length === 0 && <p className="text-lg text-ink-soft">Nothing received yet.</p>}
+          {(payments ?? []).length === 0 && <p className="text-base text-ink-soft">Nothing received yet.</p>}
           {(payments ?? []).map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] last:border-0 py-2">
               <div>
-                <p className="text-lg font-semibold">{money(p.amount)} — {statusLabel(p.method) || p.method}</p>
+                <p className="text-base font-semibold">{money(p.amount)} — {statusLabel(p.method) || p.method}</p>
                 <p className="text-base text-ink-soft">{new Date(p.paid_at).toLocaleDateString()}{p.reference ? ` · ref ${p.reference}` : ""}</p>
               </div>
               {isFinance && <BigButton size="md" variant="ghost" className="text-danger-800" onClick={() => void removePayment(p.id)}>Undo</BigButton>}
@@ -271,14 +271,14 @@ export default function InvoicePage() {
       {/* Adjustments */}
       <Card className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-brand-950">Adjustments (traceable)</h2>
+          <h2 className="text-lg font-bold text-brand-950">Adjustments (traceable)</h2>
           {isFinance && <BigButton size="md" variant="secondary" onClick={() => setAdjOpen(true)}>+ Adjustment</BigButton>}
         </div>
         <div className="mt-3 space-y-2">
-          {(adjustments ?? []).length === 0 && <p className="text-lg text-ink-soft">No discounts, credits or corrections recorded.</p>}
+          {(adjustments ?? []).length === 0 && <p className="text-base text-ink-soft">No discounts, credits or corrections recorded.</p>}
           {(adjustments ?? []).map((a) => (
             <div key={a.id} className="border-b border-[var(--color-line)] last:border-0 py-2">
-              <p className="text-lg font-semibold">{statusLabel(a.kind) || a.kind}: {money(a.amount)}</p>
+              <p className="text-base font-semibold">{statusLabel(a.kind) || a.kind}: {money(a.amount)}</p>
               <p className="text-base text-ink-soft">{a.reason} · {new Date(a.created_at).toLocaleDateString()}</p>
             </div>
           ))}
@@ -292,7 +292,7 @@ export default function InvoicePage() {
             <BigInput label="Quantity" type="number" value={line.quantity} onChange={(e) => setLine({ ...line, quantity: e.target.value })} />
             <BigInput label="Unit price (₦)" required type="number" value={line.unit_price} onChange={(e) => setLine({ ...line, unit_price: e.target.value })} />
           </div>
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setLineOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void addLine()}>{busy ? "Saving…" : "Add line"}</BigButton>
@@ -302,7 +302,7 @@ export default function InvoicePage() {
 
       <Modal open={payOpen} title="Record a payment" onClose={() => { setPayOpen(false); setError(null); }}>
         <div className="space-y-5">
-          <p className="text-lg">Outstanding on this invoice: <strong>{money(outstanding)}</strong></p>
+          <p className="text-base">Outstanding on this invoice: <strong>{money(outstanding)}</strong></p>
           <div className="grid gap-5 sm:grid-cols-2">
             <BigInput label="Amount received (₦)" required type="number" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} />
             <BigSelect
@@ -316,7 +316,7 @@ export default function InvoicePage() {
             <BigInput label="Date received" type="date" value={pay.paid_at} onChange={(e) => setPay({ ...pay, paid_at: e.target.value })} />
             <BigInput label="Bank/reference no. (optional)" value={pay.reference} onChange={(e) => setPay({ ...pay, reference: e.target.value })} />
           </div>
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setPayOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void recordPayment()}>{busy ? "Saving…" : "Save payment"}</BigButton>
@@ -326,7 +326,7 @@ export default function InvoicePage() {
 
       <Modal open={adjOpen} title="Invoice adjustment" onClose={() => { setAdjOpen(false); setError(null); }}>
         <div className="space-y-5">
-          <p className="text-lg">Adjustments are permanent entries in a ledger — nothing is edited away. Discounts and waivers reduce the total.</p>
+          <p className="text-base">Adjustments are permanent entries in a ledger — nothing is edited away. Discounts and waivers reduce the total.</p>
           <div className="grid gap-5 sm:grid-cols-2">
             <BigSelect
               label="Kind"
@@ -337,7 +337,7 @@ export default function InvoicePage() {
             <BigInput label="Amount (₦)" required type="number" value={adj.amount} onChange={(e) => setAdj({ ...adj, amount: e.target.value })} />
           </div>
           <BigInput label="Reason (required)" required value={adj.reason} onChange={(e) => setAdj({ ...adj, reason: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setAdjOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void addAdjustment()}>{busy ? "Saving…" : "Record adjustment"}</BigButton>

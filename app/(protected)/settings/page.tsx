@@ -294,12 +294,12 @@ function InviteModal({
     <Modal open={open} title="Invite a new user" onClose={onClose}>
       {invited ? (
         <div className="space-y-4">
-          <p className="text-lg font-semibold text-success-700">
+          <p className="text-base font-semibold text-success-700">
             Account created for {invited.email}.
           </p>
           <div className="rounded-xl bg-brand-50 p-4">
             <p className="text-base text-ink-soft">Temporary password — share it once, in person or by phone:</p>
-            <p className="select-all text-2xl font-bold tracking-wide">{invited.password}</p>
+            <p className="select-all text-xl font-bold tracking-wide">{invited.password}</p>
           </div>
           <p className="text-base text-ink-soft">
             Ask them to sign in with this password and immediately use “Forgot password” to set their own.
@@ -418,7 +418,7 @@ function PermissionsPanel({ canEdit }: { canEdit: boolean }) {
             const p = editing ? current! : (row ?? { role, resource: res.key, ...DEFAULT_PERM });
             return (
               <div key={res.key} className="rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-4">
-                <p className="text-lg font-bold">{res.label}</p>
+                <p className="text-base font-bold">{res.label}</p>
                 <p className="mb-3 text-base text-ink-soft">
                   {row
                     ? FLAGS.filter((f) => row[f.key]).map((f) => f.label).join(" · ") || "Nothing allowed"
@@ -500,7 +500,7 @@ function LimitsPanel({ canEdit }: { canEdit: boolean }) {
   if (isPending) return <Skeleton className="h-64" />;
   return (
     <div className="space-y-3">
-      <p className="text-lg text-ink-soft">
+      <p className="text-base text-ink-soft">
         The highest purchase value each role may approve on its own. Bigger amounts move up the chain.
       </p>
       {APP_ROLES.map((r) => {
@@ -508,7 +508,7 @@ function LimitsPanel({ canEdit }: { canEdit: boolean }) {
         const value = draft[r] ?? String(row?.max_amount ?? 0);
         return (
           <div key={r} className="flex flex-wrap items-end gap-3 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-4">
-            <p className="min-w-48 flex-1 text-lg font-bold">{ROLE_LABELS[r]}</p>
+            <p className="min-w-48 flex-1 text-base font-bold">{ROLE_LABELS[r]}</p>
             <p className="text-base text-ink-soft">{row ? `Currently ${money(row.max_amount)}` : "No limit saved — treated as 0"}</p>
             {canEdit && (
               <>
@@ -575,14 +575,14 @@ function RulesPanel({ canEdit }: { canEdit: boolean }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-lg text-ink-soft">
+      <p className="text-base text-ink-soft">
         These numbers decide who is late, how overtime is paid, and feed directly into payroll. Only HR and admins may change them — every change is written to the audit log.
       </p>
       {rows.map((rule) => {
         const d = draft?.id === rule.id ? draft : rule;
         return (
           <div key={rule.id} className="rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-4">
-            <p className="text-lg font-bold">{rule.name} {rule.is_active ? "" : "(inactive)"} <StatusBadge status={rule.is_active ? "active" : "inactive"} /></p>
+            <p className="text-base font-bold">{rule.name} {rule.is_active ? "" : "(inactive)"} <StatusBadge status={rule.is_active ? "active" : "inactive"} /></p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <BigInput label="Grace minutes late" type="number" value={String(d.grace_minutes)} disabled={!canEdit}
                 onChange={(e) => draft?.id === rule.id && setDraft({ ...draft, grace_minutes: Number(e.target.value) })} />
@@ -658,14 +658,14 @@ function AppSettingsPanel({ canEdit }: { canEdit: boolean }) {
   if (isPending) return <Skeleton className="h-64" />;
   return (
     <div className="space-y-3">
-      <p className="text-lg text-ink-soft">
+      <p className="text-base text-ink-soft">
         Company-wide switches and numbers. Values may be text like 300, true/false, or lists in square brackets.
       </p>
       {(rows ?? []).map((s) => {
         const asText = draft[s.key] ?? (typeof s.value === "string" ? s.value : JSON.stringify(s.value));
         return (
           <div key={s.key} className="rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-4">
-            <p className="text-lg font-bold">{s.key.replaceAll("_", " ")}</p>
+            <p className="text-base font-bold">{s.key.replaceAll("_", " ")}</p>
             {s.description && <p className="text-base text-ink-soft">{s.description}</p>}
             <div className="mt-3 flex flex-wrap items-end gap-3">
               <BigInput label="Value" value={asText} disabled={!canEdit} className="min-w-64 flex-1"
@@ -681,7 +681,7 @@ function AppSettingsPanel({ canEdit }: { canEdit: boolean }) {
       })}
       {canEdit && (
         <div className="rounded-[var(--radius-card)] border border-dashed border-[var(--color-line)] bg-white p-4">
-          <p className="text-lg font-bold">Add a new setting</p>
+          <p className="text-base font-bold">Add a new setting</p>
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <BigInput label="Key (lower_case_no_spaces)" value={newKey} onChange={(e) => setNewKey(e.target.value)} className="min-w-56 flex-1" />
             <BigInput label="Value (text or JSON)" value={newVal} onChange={(e) => setNewVal(e.target.value)} className="min-w-56 flex-1" />
@@ -775,7 +775,7 @@ function AuditPanel() {
         />
         <BigButton variant="secondary" onClick={exportCsv} disabled={enriched.length === 0}>Export CSV</BigButton>
       </div>
-      <p className="mt-3 text-lg text-ink-soft">
+      <p className="mt-3 text-base text-ink-soft">
         Every sensitive change — attendance corrections, payroll approvals, payments, permissions — is stamped here with who did it and when. Nothing can be edited away.
       </p>
       {isPending ? (

@@ -144,7 +144,7 @@ export default function PeoplePage() {
               title={p.full_name}
               subtitle={`${p.email}${p.employee_no ? ` · ${p.employee_no}` : ""} · ${deptName(p.department_id)}`}
               badge={<StatusBadge status={p.status} />}
-              actions={<span className="text-lg text-brand-800 font-semibold self-center">{statusLabel(p.role)}</span>}
+              actions={<span className="text-base text-brand-800 font-semibold self-center">{statusLabel(p.role)}</span>}
               onClick={() => openDetail(p)}
             />
           ))}
@@ -155,7 +155,7 @@ export default function PeoplePage() {
         {detail && (
           <div className="space-y-6">
             <Card className="!shadow-none bg-surface">
-              <dl className="grid gap-2 sm:grid-cols-2 text-lg">
+              <dl className="grid gap-2 sm:grid-cols-2 text-base">
                 <div><dt className="text-ink-soft">Email</dt><dd className="font-semibold">{detail.email}</dd></div>
                 <div><dt className="text-ink-soft">Joined</dt><dd className="font-semibold">{detail.employed_at ? new Date(detail.employed_at).toLocaleDateString() : "—"}</dd></div>
               </dl>
@@ -187,24 +187,24 @@ export default function PeoplePage() {
               <BigInput label="Phone" value={edit.phone} onChange={(e) => setEdit({ ...edit, phone: e.target.value })} disabled={!canHr} />
               <BigInput label="Home base" value={edit.home_base} onChange={(e) => setEdit({ ...edit, home_base: e.target.value })} disabled={!canHr} />
             </div>
-            {!canHr && <p className="text-lg text-ink-soft">Only HR and admins can change these fields.</p>}
+            {!canHr && <p className="text-base text-ink-soft">Only HR and admins can change these fields.</p>}
 
             <section>
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-brand-950">Licences & training</h3>
+                <h3 className="text-lg font-bold text-brand-950">Licences & training</h3>
                 <BigButton size="md" onClick={() => setCertOpen(true)}>+ Add</BigButton>
               </div>
               <div className="mt-3 space-y-2">
-                {(certs ?? []).length === 0 && <p className="text-lg text-ink-soft">Nothing recorded yet.</p>}
+                {(certs ?? []).length === 0 && <p className="text-base text-ink-soft">Nothing recorded yet.</p>}
                 {(certs ?? []).map((c) => {
                   const soon = c.expiry_date && new Date(c.expiry_date).getTime() - Date.now() < 60 * 86400000;
                   return (
                     <div key={c.id} className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] last:border-0 py-2">
                       <div>
-                        <p className="text-lg font-semibold">{c.name}</p>
+                        <p className="text-base font-semibold">{c.name}</p>
                         <p className="text-base text-ink-soft">{c.issued_by ?? ""}</p>
                       </div>
-                      <p className={soon ? "text-lg font-bold text-danger-800" : "text-lg"}>
+                      <p className={soon ? "text-base font-bold text-danger-800" : "text-base"}>
                         {c.expiry_date ? `expires ${c.expiry_date}` : "no expiry"}
                       </p>
                     </div>
@@ -213,7 +213,7 @@ export default function PeoplePage() {
               </div>
             </section>
 
-            {error && <p className="text-lg text-danger-800">{error}</p>}
+            {error && <p className="text-base text-danger-800">{error}</p>}
             <div className="flex justify-end gap-3">
               <BigButton variant="secondary" onClick={() => setDetail(null)}>Close</BigButton>
               {canHr && <BigButton variant="success" disabled={busy} onClick={() => void savePerson()}>{busy ? "Saving…" : "Save changes"}</BigButton>}

@@ -219,7 +219,7 @@ export default function ProcurementPage() {
                     />
                     <BigInput label="Needed by" type="date" value={form.need_by_date} onChange={(e) => setForm({ ...form, need_by_date: e.target.value })} />
                   </div>
-                  <h3 className="text-lg font-bold text-brand-950">Materials needed</h3>
+                  <h3 className="text-base font-bold text-brand-950">Materials needed</h3>
                   {items.map((li, idx) => (
                     <div key={idx} className="grid gap-3 sm:grid-cols-[1fr_90px_90px_130px_48px] items-end">
                       <BigInput label={idx === 0 ? "Material" : " "} value={li.material} onChange={(e) => setItems(items.map((x, i) => (i === idx ? { ...x, material: e.target.value } : x)))} />
@@ -232,7 +232,7 @@ export default function ProcurementPage() {
                   <BigButton size="md" variant="secondary" onClick={() => setItems([...items, { material: "", quantity: "1", unit: "pcs", estimated_unit_cost: "" }])}>
                     + Add material
                   </BigButton>
-                  <p className="text-lg font-bold">Estimated total: {money(estTotal)}</p>
+                  <p className="text-base font-bold">Estimated total: {money(estTotal)}</p>
                 </div>
               ),
             },
@@ -252,7 +252,7 @@ export default function ProcurementPage() {
                       { value: "admin", label: "Admin (up to ₦100m)" },
                     ]}
                   />
-                  <Card className="text-lg bg-surface">
+                  <Card className="text-base bg-surface">
                     {goodItems.length} material line(s), estimated {money(estTotal)}. Press “Save request” to keep it as a draft — add quotes and submit for approval on the next screen.
                   </Card>
                   {error && <Card className="border-danger-600 text-danger-800">{error}</Card>}

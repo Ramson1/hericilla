@@ -102,7 +102,7 @@ export default function AnnouncementsPage() {
         <BigInput label="Title" required value={title} onChange={(e) => setTitle(e.target.value)} />
         <BigTextarea label="Message" required rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
         <div>
-          <p className="text-lg font-semibold mb-2">Who receives it?</p>
+          <p className="text-base font-semibold mb-2">Who receives it?</p>
           <div className="flex gap-3 flex-wrap">
             {AUDIENCES.map((a) => (
               <BigButton
@@ -116,13 +116,13 @@ export default function AnnouncementsPage() {
             ))}
           </div>
         </div>
-        {error && <p className="text-lg text-danger-800">{error}</p>}
+        {error && <p className="text-base text-danger-800">{error}</p>}
         <div className="flex justify-end">
           <BigButton variant="success" disabled={busy} onClick={() => void send()}>{busy ? "Sending…" : "Send to everyone"}</BigButton>
         </div>
       </div>
 
-      <h2 className="mt-10 text-xl font-bold text-brand-950">Sent before</h2>
+      <h2 className="mt-10 text-lg font-bold text-brand-950">Sent before</h2>
       {isPending ? (
         <div className="mt-4 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
       ) : (data ?? []).length === 0 ? (

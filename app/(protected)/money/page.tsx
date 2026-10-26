@@ -331,7 +331,7 @@ export default function MoneyPage() {
                     </div>
                   ))}
                   <BigButton size="md" variant="secondary" onClick={() => setLines([...lines, { description: "", quantity: "1", unit_price: "" }])}>+ Add line</BigButton>
-                  <div className="text-lg space-y-1">
+                  <div className="text-base space-y-1">
                     <p>Subtotal: <strong>{money(lineTotal)}</strong></p>
                     <p>With {form.tax_rate}% tax: <strong>{money(grossTotal)}</strong></p>
                     <p className="text-base text-ink-soft">The invoice recalculates itself when you save — these figures are a preview.</p>
@@ -344,8 +344,8 @@ export default function MoneyPage() {
               content: (
                 <div className="space-y-5">
                   <BigInput label="Notes on the invoice (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-                  <p className="text-lg">The invoice saves as a draft — open it and press “Send to client” when ready.</p>
-                  {error && <p className="text-lg text-danger-800">{error}</p>}
+                  <p className="text-base">The invoice saves as a draft — open it and press “Send to client” when ready.</p>
+                  {error && <p className="text-base text-danger-800">{error}</p>}
                 </div>
               ),
             },
@@ -370,7 +370,7 @@ export default function MoneyPage() {
           </div>
           <BigInput label="What was it for?" value={expense.description} onChange={(e) => setExpense({ ...expense, description: e.target.value })} />
           <BigInput label="Date spent" type="date" value={expense.occurred_at} onChange={(e) => setExpense({ ...expense, occurred_at: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setExpenseOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void createExpense()}>{busy ? "Saving…" : "Save expense"}</BigButton>

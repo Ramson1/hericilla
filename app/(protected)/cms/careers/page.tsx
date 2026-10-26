@@ -241,7 +241,7 @@ export default function CmsCareersPage() {
               <Card key={a.id}>
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="text-lg font-bold text-brand-950">{a.full_name}</p>
+                    <p className="text-base font-bold text-brand-950">{a.full_name}</p>
                     <p className="text-base text-ink-soft">
                       <a className="underline text-brand-700" href={`mailto:${a.email}`}>{a.email}</a>
                       {a.phone ? ` · ${a.phone}` : ""} · {new Date(a.created_at).toLocaleDateString()}
@@ -249,7 +249,7 @@ export default function CmsCareersPage() {
                   </div>
                   <StatusBadge status={a.status} />
                 </div>
-                {a.cover_letter && <p className="mt-2 text-lg">{a.cover_letter}</p>}
+                {a.cover_letter && <p className="mt-2 text-base">{a.cover_letter}</p>}
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   {a.cv_url && (
                     <a href={a.cv_url} target="_blank" rel="noopener noreferrer">

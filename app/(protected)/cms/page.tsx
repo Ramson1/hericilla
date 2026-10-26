@@ -33,7 +33,7 @@ export default function CmsPage() {
             className="rounded-[var(--radius-card)] bg-white border border-[var(--color-line)] p-6 shadow-[var(--shadow-card)] hover:border-brand-400 hover:shadow-[var(--shadow-pop)] transition"
           >
             <span className="inline-flex rounded-2xl bg-brand-100 text-brand-800 p-3">{it.icon}</span>
-            <p className="mt-3 text-xl font-bold text-brand-950">{it.label}</p>
+            <p className="mt-3 text-lg font-bold text-brand-950">{it.label}</p>
             <p className="text-base text-ink-soft">{it.desc}</p>
           </Link>
         ))}

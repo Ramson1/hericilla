@@ -162,16 +162,16 @@ export default function InboxPage() {
       <Modal open={!!selected} title={selected ? `Enquiry ${selected.ref_no}` : ""} onClose={() => setOpenId(null)} wide>
         {selected && (
           <div className="space-y-5">
-            <div className="text-lg space-y-1">
+            <div className="text-base space-y-1">
               <p><strong>{selected.name}</strong>{selected.company ? ` — ${selected.company}` : ""}</p>
               <p>
                 <a className="text-brand-700 underline" href={`mailto:${selected.email}`}>{selected.email}</a>
                 {selected.phone && <> · <a className="text-brand-700 underline" href={`tel:${selected.phone}`}>{selected.phone}</a></>}
               </p>
             </div>
-            <Card className="whitespace-pre-line text-lg">{selected.message}</Card>
+            <Card className="whitespace-pre-line text-base">{selected.message}</Card>
             {(selected.cargo_details || selected.pickup_location) && (
-              <Card className="text-lg bg-surface">
+              <Card className="text-base bg-surface">
                 {selected.cargo_details && <p><strong>Cargo:</strong> {selected.cargo_details}</p>}
                 {selected.pickup_location && <p><strong>From:</strong> {selected.pickup_location}</p>}
                 {selected.destination && <p><strong>To:</strong> {selected.destination}</p>}
@@ -180,7 +180,7 @@ export default function InboxPage() {
             )}
             {selected.documents.length > 0 && (
               <div>
-                <p className="text-lg font-semibold">Attachments</p>
+                <p className="text-base font-semibold">Attachments</p>
                 <ul className="mt-2 space-y-1">
                   {selected.documents.map((d, i) => (
                     <li key={i}>
@@ -225,11 +225,11 @@ export default function InboxPage() {
 function ConvertBlock({ enquiry, onConvert, busy }: { enquiry: Enq; onConvert: (s: ServiceType) => void; busy: boolean }) {
   const [choice, setChoice] = useState<ServiceType | "">(enquiry.service_type ?? "");
   if (enquiry.converted_to_service_request_id) {
-    return <Card className="text-lg text-success-800 bg-success-100 border-success-600">Already turned into a service request.</Card>;
+    return <Card className="text-base text-success-800 bg-success-100 border-success-600">Already turned into a service request.</Card>;
   }
   return (
     <Card className="space-y-4">
-      <p className="text-lg font-bold text-brand-950">Turn into a job</p>
+      <p className="text-base font-bold text-brand-950">Turn into a job</p>
       <BigSelect
         label="What service is this?"
         value={choice}

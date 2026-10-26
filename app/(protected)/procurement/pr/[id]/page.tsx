@@ -177,7 +177,7 @@ export default function PurchaseRequestPage() {
       <Card className="mt-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <StatusBadge status={pr.status} />
-          <p className="text-lg">Estimated total: <strong>{money(pr.estimated_cost ?? 0)}</strong></p>
+          <p className="text-base">Estimated total: <strong>{money(pr.estimated_cost ?? 0)}</strong></p>
         </div>
         <div className="mt-3 flex flex-wrap gap-1 text-base text-ink-soft">
           {statusSteps.map((s, i) => (
@@ -186,7 +186,7 @@ export default function PurchaseRequestPage() {
             </span>
           ))}
         </div>
-        <dl className="mt-3 grid gap-2 sm:grid-cols-2 text-lg">
+        <dl className="mt-3 grid gap-2 sm:grid-cols-2 text-base">
           <div><dt className="text-ink-soft">Needed by</dt><dd className="font-semibold">{pr.need_by_date ? new Date(pr.need_by_date).toLocaleDateString() : "—"}</dd></div>
           <div><dt className="text-ink-soft">Approver needed</dt><dd className="font-semibold">{statusLabel(pr.required_approver_role)}</dd></div>
         </dl>
@@ -194,26 +194,26 @@ export default function PurchaseRequestPage() {
 
       {/* Items */}
       <Card className="mt-6">
-        <h2 className="text-xl font-bold text-brand-950">What we need to buy</h2>
+        <h2 className="text-lg font-bold text-brand-950">What we need to buy</h2>
         <div className="mt-3 space-y-2">
           {(items ?? []).map((it) => (
-            <div key={it.id} className="flex justify-between text-lg border-b border-[var(--color-line)] last:border-0 py-2">
+            <div key={it.id} className="flex justify-between text-base border-b border-[var(--color-line)] last:border-0 py-2">
               <span>{it.material}</span>
               <span className="text-ink-soft">{Number(it.quantity)} {it.unit} × {money(it.estimated_unit_cost)}</span>
             </div>
           ))}
-          {(items ?? []).length === 0 && <p className="text-lg text-ink-soft">No lines recorded.</p>}
+          {(items ?? []).length === 0 && <p className="text-base text-ink-soft">No lines recorded.</p>}
         </div>
       </Card>
 
       {/* Supplier quotes */}
       <Card className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-brand-950">Supplier quotations</h2>
+          <h2 className="text-lg font-bold text-brand-950">Supplier quotations</h2>
           <BigButton size="md" onClick={() => setQuoteOpen(true)}>+ Add quote</BigButton>
         </div>
         <div className="mt-3 space-y-3">
-          {(quotes ?? []).length === 0 && <p className="text-lg text-ink-soft">No quotes yet. Add what each supplier charges so you can compare.</p>}
+          {(quotes ?? []).length === 0 && <p className="text-base text-ink-soft">No quotes yet. Add what each supplier charges so you can compare.</p>}
           {(quotes ?? []).map((q) => (
             <RowCard
               key={q.id}
@@ -245,7 +245,7 @@ export default function PurchaseRequestPage() {
           <BigButton variant="primary" onClick={() => void createPo()}>Create purchase order</BigButton>
         )}
         {pr.status === "approved" && !(quotes ?? []).some((q) => q.is_selected) && (
-          <p className="text-lg text-warning-800 self-center">Choose a supplier quote first, then you can create the order.</p>
+          <p className="text-base text-warning-800 self-center">Choose a supplier quote first, then you can create the order.</p>
         )}
       </div>
 

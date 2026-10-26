@@ -86,7 +86,7 @@ export default function DashboardPage() {
         <>
           {/* Today triage */}
           <section className="mt-6" aria-label="Today">
-            <h2 className="text-xl font-bold text-brand-950 mb-3">Today</h2>
+            <h2 className="text-lg font-bold text-brand-950 mb-3">Today</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard label="Enquiries waiting" value={kpis.enqNew} hint="New website requests" />
               <StatCard label="Open chats" value={kpis.chatsOpen} hint="Website live chat" />
@@ -96,18 +96,18 @@ export default function DashboardPage() {
           </section>
 
           <section className="mt-8" aria-label="Needs your attention">
-            <h2 className="text-xl font-bold text-brand-950 mb-3 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-brand-950 mb-3 flex items-center gap-2">
               <AlertTriangle className="h-6 w-6 text-warning-600" /> Needs your attention
             </h2>
             <Card className="divide-y divide-[var(--color-line)] !p-0">
               {attention.length === 0 ? (
-                <p className="p-6 text-lg text-ink-soft">
+                <p className="p-6 text-base text-ink-soft">
                   Nothing urgent right now. When something waits on you, it appears here.
                 </p>
               ) : (
                 attention.map((a) => (
                   <Link key={a.label} href={a.href} className="flex items-center justify-between gap-4 p-5 hover:bg-brand-50">
-                    <span className="text-lg">
+                    <span className="text-base">
                       <strong className="text-brand-950">{a.n}</strong> {a.label}
                     </span>
                     <span className="rounded-full bg-danger-100 text-danger-800 px-4 py-1 font-bold text-base whitespace-nowrap">
@@ -120,7 +120,7 @@ export default function DashboardPage() {
           </section>
 
           <section className="mt-8" aria-label="Everything else">
-            <h2 className="text-xl font-bold text-brand-950 mb-3">Everything else</h2>
+            <h2 className="text-lg font-bold text-brand-950 mb-3">Everything else</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard label="Requests being worked" value={kpis.srOpen} hint="Service requests open" />
               <StatCard label="Completed this month" value={kpis.woDoneMonth} hint="Work orders finished" />

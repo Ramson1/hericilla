@@ -145,9 +145,9 @@ export function AllocationsPanel({
         </div>
       ) : (
         <>
-          <h2 className="mt-4 text-2xl font-bold text-brand-950">Out now ({active.length})</h2>
+          <h2 className="mt-4 text-xl font-bold text-brand-950">Out now ({active.length})</h2>
           {active.length === 0 ? (
-            <p className="mt-2 text-lg text-ink-soft italic">Every vehicle is back in the yard.</p>
+            <p className="mt-2 text-base text-ink-soft italic">Every vehicle is back in the yard.</p>
           ) : (
             <div className="mt-2 space-y-3">
               {active.map((a) => (
@@ -172,7 +172,7 @@ export function AllocationsPanel({
 
           {past.length > 0 && (
             <>
-              <h2 className="mt-8 text-2xl font-bold text-brand-950">Finished ({past.length})</h2>
+              <h2 className="mt-8 text-xl font-bold text-brand-950">Finished ({past.length})</h2>
               <div className="mt-2 space-y-3">
                 {past.slice(0, 30).map((a) => (
                   <RowCard
@@ -225,7 +225,7 @@ export function AllocationsPanel({
             <BigInput label="Planned back (optional)" type="datetime-local" value={form.valid_to} onChange={(e) => setForm({ ...form, valid_to: e.target.value })} />
           </div>
           <BigInput label="Notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void create()}>{busy ? "Saving…" : "Allocate vehicle"}</BigButton>

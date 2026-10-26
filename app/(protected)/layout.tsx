@@ -36,12 +36,12 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-lg text-center p-10">
-          <h1 className="text-2xl font-bold text-brand-950">Wrong door for this account</h1>
-          <p className="mt-4 text-lg text-ink-soft">{blockedReason}</p>
+          <h1 className="text-xl font-bold text-brand-950">Wrong door for this account</h1>
+          <p className="mt-4 text-base text-ink-soft">{blockedReason}</p>
           {profile?.role === "driver" ? (
-            <p className="mt-2 text-lg text-ink-soft">Use the driver app on your phone to sign in.</p>
+            <p className="mt-2 text-base text-ink-soft">Use the driver app on your phone to sign in.</p>
           ) : profile ? (
-            <p className="mt-2 text-lg text-ink-soft">The staff portal is the right place for your account.</p>
+            <p className="mt-2 text-base text-ink-soft">The staff portal is the right place for your account.</p>
           ) : null}
           <BigButton className="mt-6" variant="secondary" onClick={() => void signOut()}>
             Sign out

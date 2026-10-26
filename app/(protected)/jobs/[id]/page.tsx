@@ -250,10 +250,10 @@ export default function JobDetailPage() {
             </div>
             <div className="text-right">
               <p className="text-base text-ink-soft">Priority</p>
-              <p className="text-lg font-bold">{sr.priority}</p>
+              <p className="text-base font-bold">{sr.priority}</p>
             </div>
           </div>
-          <dl className="mt-4 space-y-2 text-lg">
+          <dl className="mt-4 space-y-2 text-base">
             <Row label="Service" value={SERVICE_LABELS[sr.service_type]} />
             <Row label="Client" value={sr.client_name ? <Link className="text-brand-700 underline" href={`/clients/${sr.client_id}`}>{sr.client_name}</Link> : "—"} />
             <Row label="Deadline" value={sr.deadline ? new Date(sr.deadline).toLocaleDateString() : "Not set"} />
@@ -261,7 +261,7 @@ export default function JobDetailPage() {
             <Row label="Came from" value={sr.origin} />
             <Row label="Officer" value={assigneeName ?? "Not assigned"} />
           </dl>
-          {sr.description && <p className="mt-4 text-lg text-ink-soft">{sr.description}</p>}
+          {sr.description && <p className="mt-4 text-base text-ink-soft">{sr.description}</p>}
 
           <div className="mt-6 flex flex-wrap gap-3">
             <BigSelect
@@ -279,19 +279,19 @@ export default function JobDetailPage() {
         {/* Quotations */}
         <Card>
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-brand-950">Quotations</h2>
+            <h2 className="text-lg font-bold text-brand-950">Quotations</h2>
             <BigButton size="md" onClick={() => setQuoteOpen(true)}>
               + New quotation
             </BigButton>
           </div>
           <div className="mt-4 space-y-4">
             {(quotes ?? []).length === 0 && (
-              <p className="text-lg text-ink-soft">No quotation yet. Price the job with “+ New quotation” — send it to the client, then approve it when they say yes.</p>
+              <p className="text-base text-ink-soft">No quotation yet. Price the job with “+ New quotation” — send it to the client, then approve it when they say yes.</p>
             )}
             {(quotes ?? []).map((q) => (
               <div key={q.id} className="rounded-2xl border border-[var(--color-line)] p-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-lg font-bold">{q.ref_no}</p>
+                  <p className="text-base font-bold">{q.ref_no}</p>
                   <StatusBadge status={q.status} />
                 </div>
                 <table className="mt-3 w-full text-base">
@@ -305,7 +305,7 @@ export default function JobDetailPage() {
                     ))}
                   </tbody>
                 </table>
-                <p className="mt-2 text-right text-lg font-bold">{money(q.total)} <span className="text-base font-normal text-ink-soft">incl. {q.tax_rate}% VAT</span></p>
+                <p className="mt-2 text-right text-base font-bold">{money(q.total)} <span className="text-base font-normal text-ink-soft">incl. {q.tax_rate}% VAT</span></p>
                 {q.status === "draft" && (
                   <div className="mt-3 flex flex-wrap gap-3">
                     <BigButton size="md" variant="secondary" onClick={() => void setQuoteStatus(q, "sent")}>
@@ -336,10 +336,10 @@ export default function JobDetailPage() {
 
         {/* Work orders */}
         <Card>
-          <h2 className="text-xl font-bold text-brand-950">Work orders</h2>
+          <h2 className="text-lg font-bold text-brand-950">Work orders</h2>
           <div className="mt-4 space-y-3">
             {(workOrders ?? []).length === 0 && (
-              <p className="text-lg text-ink-soft">None yet — a work order appears here the moment a quotation is approved.</p>
+              <p className="text-base text-ink-soft">None yet — a work order appears here the moment a quotation is approved.</p>
             )}
             {(workOrders ?? []).map((w) => (
               <RowCard
@@ -359,14 +359,14 @@ export default function JobDetailPage() {
         {/* Feedback */}
         <Card>
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-brand-950">Client feedback</h2>
+            <h2 className="text-lg font-bold text-brand-950">Client feedback</h2>
             <BigButton size="md" variant="secondary" onClick={() => setFeedbackOpen(true)}>
               + Record feedback
             </BigButton>
           </div>
           <div className="mt-4 space-y-3">
             {(feedbackRows ?? []).length === 0 && (
-              <p className="text-lg text-ink-soft">Nothing recorded. When the client calls with praise or a complaint, write it down here.</p>
+              <p className="text-base text-ink-soft">Nothing recorded. When the client calls with praise or a complaint, write it down here.</p>
             )}
             {(feedbackRows ?? []).map((f) => (
               <div key={f.id} className="rounded-2xl border border-[var(--color-line)] p-4">
@@ -374,7 +374,7 @@ export default function JobDetailPage() {
                   <StatusBadge status={f.kind} />
                   <span className="text-base text-ink-soft">{new Date(f.created_at).toLocaleDateString()}</span>
                 </div>
-                <p className="mt-2 text-lg">{f.message}</p>
+                <p className="mt-2 text-base">{f.message}</p>
                 <p className="mt-1 text-base text-ink-soft">
                   {f.raised_by ?? "Unknown"}{f.rating ? ` · ${f.rating}/5 stars` : ""}
                 </p>
@@ -391,7 +391,7 @@ export default function JobDetailPage() {
             <BigInput label="Valid until" type="date" value={quote.valid_until} onChange={(e) => setQuote({ ...quote, valid_until: e.target.value })} />
             <BigInput label="Notes for the client" value={quote.notes} onChange={(e) => setQuote({ ...quote, notes: e.target.value })} />
           </div>
-          <h3 className="text-lg font-bold text-brand-950">Price lines</h3>
+          <h3 className="text-base font-bold text-brand-950">Price lines</h3>
           {items.map((li, idx) => (
             <div key={idx} className="grid gap-3 sm:grid-cols-[1fr_110px_150px_48px] items-end">
               <BigInput
@@ -425,7 +425,7 @@ export default function JobDetailPage() {
             <BigButton size="md" variant="secondary" onClick={() => setItems([...items, { description: "", quantity: "1", unit_price: "" }])}>
               + Add another line
             </BigButton>
-            <p className="text-lg font-bold">Subtotal so far: {money(draftQuote)} · with VAT ≈ {money(Math.round(draftQuote * 1.075))}</p>
+            <p className="text-base font-bold">Subtotal so far: {money(draftQuote)} · with VAT ≈ {money(Math.round(draftQuote * 1.075))}</p>
           </div>
           {quoteError && <Card className="border-danger-600 text-danger-800">{quoteError}</Card>}
           <div className="flex justify-end gap-3">
@@ -448,7 +448,7 @@ export default function JobDetailPage() {
             onChange={(e) => void saveAssignee(e.target.value)}
             options={(people ?? []).map((p) => ({ value: p.id, label: p.full_name ?? "" }))}
           />
-          <p className="text-lg text-ink-soft">Pick a name and it saves straight away. The officer will see the job under “Jobs”.</p>
+          <p className="text-base text-ink-soft">Pick a name and it saves straight away. The officer will see the job under “Jobs”.</p>
         </div>
       </Modal>
 

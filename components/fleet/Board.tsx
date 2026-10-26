@@ -42,12 +42,12 @@ export function BoardPanel({ board }: { board: FleetBoardRow[] }) {
         return (
           <section key={g.key}>
             <div className="flex items-baseline gap-3">
-              <h2 className="text-2xl font-bold text-brand-950">{g.label}</h2>
-              <span className="text-lg text-ink-soft">{rows.length} vehicle{rows.length === 1 ? "" : "s"}</span>
+              <h2 className="text-xl font-bold text-brand-950">{g.label}</h2>
+              <span className="text-base text-ink-soft">{rows.length} vehicle{rows.length === 1 ? "" : "s"}</span>
             </div>
-            <p className="text-lg text-ink-soft">{g.teach}</p>
+            <p className="text-base text-ink-soft">{g.teach}</p>
             {rows.length === 0 ? (
-              <p className="mt-3 text-lg text-ink-soft italic">None right now.</p>
+              <p className="mt-3 text-base text-ink-soft italic">None right now.</p>
             ) : (
               <div className="mt-3 space-y-3">
                 {rows.map((v) => (
@@ -79,7 +79,7 @@ export function BoardPanel({ board }: { board: FleetBoardRow[] }) {
         );
       })}
       <Card>
-        <p className="text-lg text-ink-soft">
+        <p className="text-base text-ink-soft">
           The board updates from gate movements logged here or in the driver app. Retired vehicles are hidden.
         </p>
       </Card>

@@ -155,8 +155,8 @@ export default function ClientDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="text-xl font-bold text-brand-950">Company details</h2>
-          <dl className="mt-4 space-y-3 text-lg">
+          <h2 className="text-lg font-bold text-brand-950">Company details</h2>
+          <dl className="mt-4 space-y-3 text-base">
             <Detail label="RC number" value={client.rc_number} />
             <Detail label="Address" value={[client.address, client.city].filter(Boolean).join(", ")} />
             <Detail label="Phone" value={client.phone} />
@@ -168,14 +168,14 @@ export default function ClientDetailPage() {
 
         <Card>
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-brand-950">Contacts</h2>
+            <h2 className="text-lg font-bold text-brand-950">Contacts</h2>
             <BigButton size="md" variant="secondary" onClick={() => setContactOpen(true)}>
               + Add contact
             </BigButton>
           </div>
           <div className="mt-4 space-y-3">
             {(contacts ?? []).length === 0 && (
-              <p className="text-lg text-ink-soft">No contacts yet. Add the person who calls us — name, role and phone.</p>
+              <p className="text-base text-ink-soft">No contacts yet. Add the person who calls us — name, role and phone.</p>
             )}
             {(contacts ?? []).map((c) => (
               <RowCard
@@ -194,10 +194,10 @@ export default function ClientDetailPage() {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-bold text-brand-950">Contracts</h2>
+          <h2 className="text-lg font-bold text-brand-950">Contracts</h2>
           <div className="mt-4 space-y-3">
             {(contracts ?? []).length === 0 && (
-              <p className="text-lg text-ink-soft">No contracts recorded yet. Contracts appear here in the documents module (Phase 2).</p>
+              <p className="text-base text-ink-soft">No contracts recorded yet. Contracts appear here in the documents module (Phase 2).</p>
             )}
             {(contracts ?? []).map((k) => (
               <RowCard
@@ -211,10 +211,10 @@ export default function ClientDetailPage() {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-bold text-brand-950">Recent jobs (service requests)</h2>
+          <h2 className="text-lg font-bold text-brand-950">Recent jobs (service requests)</h2>
           <div className="mt-4 space-y-3">
             {(requests ?? []).length === 0 && (
-              <p className="text-lg text-ink-soft">No jobs yet. Start one with the “Jobs” button on the left.</p>
+              <p className="text-base text-ink-soft">No jobs yet. Start one with the “Jobs” button on the left.</p>
             )}
             {(requests ?? []).map((r) => (
               <RowCard
@@ -263,7 +263,7 @@ export default function ClientDetailPage() {
           <BigInput label="Job title" value={contact.job_title} onChange={(e) => setContact({ ...contact, job_title: e.target.value })} />
           <BigInput label="Phone" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />
           <BigInput label="Email" type="email" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} />
-          <label className="flex items-center gap-3 text-lg">
+          <label className="flex items-center gap-3 text-base">
             <input type="checkbox" checked={contact.is_primary} onChange={(e) => setContact({ ...contact, is_primary: e.target.checked })} className="h-6 w-6" />
             This is the main person we call
           </label>

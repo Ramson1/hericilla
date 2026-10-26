@@ -191,7 +191,7 @@ export default function PackingJobPage() {
             </BigButton>
           ))}
         </div>
-        <dl className="mt-4 grid gap-2 sm:grid-cols-2 text-lg">
+        <dl className="mt-4 grid gap-2 sm:grid-cols-2 text-base">
           <div><dt className="text-ink-soft">Pack at</dt><dd className="font-semibold">{job.origin_address}</dd></div>
           <div><dt className="text-ink-soft">Unpack at</dt><dd className="font-semibold">{job.destination_address}</dd></div>
           <div><dt className="text-ink-soft">Planned date</dt><dd className="font-semibold">{job.scheduled_at ? new Date(job.scheduled_at).toLocaleDateString() : "Not set"}</dd></div>
@@ -202,21 +202,21 @@ export default function PackingJobPage() {
             </dd>
           </div>
         </dl>
-        {job.notes && <p className="mt-3 text-lg rounded-xl bg-surface p-4">{job.notes}</p>}
+        {job.notes && <p className="mt-3 text-base rounded-xl bg-surface p-4">{job.notes}</p>}
       </Card>
 
       {/* Item list */}
       <Card className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-brand-950">Item list ({(items ?? []).length})</h2>
+          <h2 className="text-lg font-bold text-brand-950">Item list ({(items ?? []).length})</h2>
           <BigButton size="md" onClick={() => setItemOpen(true)}>+ Add item</BigButton>
         </div>
         <div className="mt-3 space-y-2">
-          {(items ?? []).length === 0 && <p className="text-lg text-ink-soft">Nothing listed yet. Add every box and piece of equipment so nothing gets lost.</p>}
+          {(items ?? []).length === 0 && <p className="text-base text-ink-soft">Nothing listed yet. Add every box and piece of equipment so nothing gets lost.</p>}
           {(items ?? []).map((it) => (
             <div key={it.id} className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] last:border-0 py-2">
               <div>
-                <p className="text-lg font-semibold">{it.box_no ? `Box ${it.box_no} — ` : ""}{it.description}</p>
+                <p className="text-base font-semibold">{it.box_no ? `Box ${it.box_no} — ` : ""}{it.description}</p>
                 <p className="text-base text-ink-soft">{Number(it.quantity)} pc · {it.condition}</p>
               </div>
               <BigButton size="md" variant="ghost" className="text-danger-800" onClick={() => setDeleteItemId(it.id)}>Remove</BigButton>
@@ -227,12 +227,12 @@ export default function PackingJobPage() {
 
       {/* Team */}
       <Card className="mt-6">
-        <h2 className="text-xl font-bold text-brand-950">Team on this move</h2>
+        <h2 className="text-lg font-bold text-brand-950">Team on this move</h2>
         <div className="mt-3 space-y-2">
-          {(team ?? []).length === 0 && <p className="text-lg text-ink-soft">No one assigned yet.</p>}
+          {(team ?? []).length === 0 && <p className="text-base text-ink-soft">No one assigned yet.</p>}
           {(team ?? []).map((t) => (
             <div key={t.profile_id} className="flex items-center justify-between gap-3 py-1">
-              <p className="text-lg">{t.full_name}</p>
+              <p className="text-base">{t.full_name}</p>
               <BigButton size="md" variant="ghost" className="text-danger-800" onClick={() => void removeTeamMember(t.profile_id)}>Remove</BigButton>
             </div>
           ))}
@@ -250,11 +250,11 @@ export default function PackingJobPage() {
 
       {/* Equipment */}
       <Card className="mt-6">
-        <h2 className="text-xl font-bold text-brand-950">Vehicles & equipment</h2>
+        <h2 className="text-lg font-bold text-brand-950">Vehicles & equipment</h2>
         <div className="mt-3 space-y-2">
-          {(vehicles ?? []).length === 0 && <p className="text-lg text-ink-soft">Nothing booked yet.</p>}
+          {(vehicles ?? []).length === 0 && <p className="text-base text-ink-soft">Nothing booked yet.</p>}
           {(vehicles ?? []).map((v) => (
-            <p key={v.id} className="text-lg py-1">{v.equipment ?? "Vehicle"}</p>
+            <p key={v.id} className="text-base py-1">{v.equipment ?? "Vehicle"}</p>
           ))}
         </div>
         <div className="mt-3 flex gap-3 items-end">
@@ -266,14 +266,14 @@ export default function PackingJobPage() {
       {/* Handovers */}
       <Card className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-brand-950">Handover records</h2>
+          <h2 className="text-lg font-bold text-brand-950">Handover records</h2>
           <BigButton size="md" onClick={() => setHandoverOpen(true)}>+ Record handover</BigButton>
         </div>
         <div className="mt-3 space-y-2">
-          {(handovers ?? []).length === 0 && <p className="text-lg text-ink-soft">No handover written down yet. Record who gave and who received the items.</p>}
+          {(handovers ?? []).length === 0 && <p className="text-base text-ink-soft">No handover written down yet. Record who gave and who received the items.</p>}
           {(handovers ?? []).map((h) => (
             <div key={h.id} className="border-b border-[var(--color-line)] last:border-0 py-2">
-              <p className="text-lg font-semibold">{h.handed_by ?? "?"} → {h.received_by ?? "?"} · {new Date(h.handed_over_at).toLocaleString()}</p>
+              <p className="text-base font-semibold">{h.handed_by ?? "?"} → {h.received_by ?? "?"} · {new Date(h.handed_over_at).toLocaleString()}</p>
               {h.item_summary && <p className="text-base text-ink-soft">{h.item_summary}</p>}
             </div>
           ))}

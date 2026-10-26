@@ -282,18 +282,18 @@ export default function AttendancePage() {
                     title={nameOf(d.employee_id)}
                     subtitle={`${d.first_in ? "In " + new Date(d.first_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "No clock-in"}${d.last_out ? ` · Out ${new Date(d.last_out).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}${d.gross_hours ? ` · ${Number(d.gross_hours).toFixed(1)} h` : ""}`}
                     badge={<StatusBadge status={d.day_status} />}
-                    actions={d.is_late ? <span className="text-lg font-bold text-warning-800 self-center">Late</span> : undefined}
+                    actions={d.is_late ? <span className="text-base font-bold text-warning-800 self-center">Late</span> : undefined}
                   />
                 ))}
               </div>
             )}
             {(stale ?? []).length > 0 && (
               <Card>
-                <h2 className="text-xl font-bold text-danger-800">Still on duty from earlier days</h2>
-                <p className="text-lg text-ink-soft mt-1">These people clocked in but never clocked out. Ask them to submit a correction, or record the event for them.</p>
+                <h2 className="text-lg font-bold text-danger-800">Still on duty from earlier days</h2>
+                <p className="text-base text-ink-soft mt-1">These people clocked in but never clocked out. Ask them to submit a correction, or record the event for them.</p>
                 <div className="mt-3 space-y-2">
                   {(stale ?? []).map((s) => (
-                    <div key={s.employee_id + s.work_date} className="flex justify-between text-lg py-1 border-b border-[var(--color-line)] last:border-0">
+                    <div key={s.employee_id + s.work_date} className="flex justify-between text-base py-1 border-b border-[var(--color-line)] last:border-0">
                       <span>{nameOf(s.employee_id)}</span>
                       <span className="text-ink-soft">since {new Date(s.work_date).toLocaleDateString()}</span>
                     </div>
@@ -309,13 +309,13 @@ export default function AttendancePage() {
         <div className="mt-6 space-y-6">
           <Card>
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="text-xl font-bold text-brand-950">Shift types</h2>
+              <h2 className="text-lg font-bold text-brand-950">Shift types</h2>
               {canManage && <BigButton size="md" onClick={() => setShiftOpen(true)}>+ New shift</BigButton>}
             </div>
             <div className="mt-3 space-y-2">
-              {(shifts ?? []).length === 0 && <p className="text-lg text-ink-soft">No shift types yet — create “Day shift”, “Night shift”, etc.</p>}
+              {(shifts ?? []).length === 0 && <p className="text-base text-ink-soft">No shift types yet — create “Day shift”, “Night shift”, etc.</p>}
               {(shifts ?? []).map((s) => (
-                <div key={s.id} className="flex justify-between text-lg py-1 border-b border-[var(--color-line)] last:border-0">
+                <div key={s.id} className="flex justify-between text-base py-1 border-b border-[var(--color-line)] last:border-0">
                   <span className="font-semibold">{s.name}</span>
                   <span className="text-ink-soft">{s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)} · {s.break_mins} min break</span>
                 </div>
@@ -326,7 +326,7 @@ export default function AttendancePage() {
           <Card>
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-brand-950">Week of</h2>
+                <h2 className="text-lg font-bold text-brand-950">Week of</h2>
                 <BigInput label=" " type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} />
               </div>
               {canManage && <BigButton size="md" onClick={() => { setAssign({ employee_id: "", shift_id: "", work_date: today, note: "" }); setAssignOpen(true); }}>+ Assign someone</BigButton>}
@@ -337,10 +337,10 @@ export default function AttendancePage() {
                 if (dayRows.length === 0) return null;
                 return (
                   <div key={day}>
-                    <h3 className="text-lg font-bold text-brand-950">{new Date(day + "T12:00:00").toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "short" })}</h3>
+                    <h3 className="text-base font-bold text-brand-950">{new Date(day + "T12:00:00").toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "short" })}</h3>
                     <div className="mt-2 space-y-2">
                       {dayRows.map((a) => (
-                        <div key={a.id} className="flex items-center justify-between gap-3 text-lg py-1 border-b border-[var(--color-line)] last:border-0">
+                        <div key={a.id} className="flex items-center justify-between gap-3 text-base py-1 border-b border-[var(--color-line)] last:border-0">
                           <span>{a.full_name} — <strong>{a.shift_name}</strong>{a.note ? ` · ${a.note}` : ""}</span>
                           {canManage && (
                             <BigButton
@@ -362,7 +362,7 @@ export default function AttendancePage() {
                 );
               })}
               {(assignments ?? []).length === 0 && (
-                <p className="text-lg text-ink-soft">Nothing scheduled this week yet. Press “+ Assign someone”.</p>
+                <p className="text-base text-ink-soft">Nothing scheduled this week yet. Press “+ Assign someone”.</p>
               )}
             </div>
           </Card>
@@ -371,7 +371,7 @@ export default function AttendancePage() {
 
       {tab === "corrections" && (
         <div className="mt-6 space-y-3">
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           {(corrections ?? []).length === 0 ? (
             <EmptyState title="No correction requests" teach="When staff miss a clock-in or clock-out, they request a correction — it lands here for a decision." />
           ) : (
@@ -456,7 +456,7 @@ export default function AttendancePage() {
             <BigInput label="On which day?" type="date" value={assign.work_date} onChange={(e) => setAssign({ ...assign, work_date: e.target.value })} />
           </div>
           <BigInput label="Note (optional)" value={assign.note} onChange={(e) => setAssign({ ...assign, note: e.target.value })} />
-          {error && <p className="text-lg text-danger-800">{error}</p>}
+          {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setAssignOpen(false)}>Cancel</BigButton>
             <BigButton variant="success" disabled={busy} onClick={() => void createAssignment()}>Save assignment</BigButton>

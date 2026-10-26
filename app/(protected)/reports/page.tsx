@@ -338,7 +338,7 @@ export default function ReportsPage() {
         </div>
       ) : null}
 
-      <p className="mt-6 text-lg text-ink-soft">{report.purpose}</p>
+      <p className="mt-6 text-base text-ink-soft">{report.purpose}</p>
 
       {isPending ? (
         <Skeleton className="mt-6 h-72" />

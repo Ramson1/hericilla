@@ -299,7 +299,7 @@ export default function JobsPage() {
                     onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
                     options={(people ?? []).map((p) => ({ value: p.id, label: p.full_name }))}
                   />
-                  <Card className="text-lg">
+                  <Card className="text-base">
                     Review: <strong>{form.title || "—"}</strong> for {form.client_id ? (clients?.find((c) => c.id === form.client_id)?.name ?? "client") : "no client"},{" "}
                     {form.service_type ? SERVICE_LABELS[form.service_type as ServiceType] : "—"}. Press “Save request” to finish.
                   </Card>

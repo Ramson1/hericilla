@@ -77,7 +77,7 @@ export default function MorePage() {
       />
       {groups.map((g) => (
         <section key={g.title} className="mt-10">
-          <h2 className="text-xl font-bold text-brand-950 mb-4">{g.title}</h2>
+          <h2 className="text-lg font-bold text-brand-950 mb-4">{g.title}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {g.items.map((it) => (
               <Link
@@ -86,7 +86,7 @@ export default function MorePage() {
                 className="rounded-[var(--radius-card)] bg-white border border-[var(--color-line)] p-6 shadow-[var(--shadow-card)] hover:border-brand-400 hover:shadow-[var(--shadow-pop)] transition"
               >
                 <span className="inline-flex rounded-2xl bg-brand-100 text-brand-800 p-3">{it.icon}</span>
-                <p className="mt-3 text-xl font-bold text-brand-950">{it.label}</p>
+                <p className="mt-3 text-lg font-bold text-brand-950">{it.label}</p>
                 <p className="text-base text-ink-soft">{it.desc}</p>
               </Link>
             ))}

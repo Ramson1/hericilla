@@ -15,6 +15,8 @@ import {
   LogOut,
   Search,
   Bell,
+  CalendarCheck,
+  Boxes,
 } from "lucide-react";
 import { hasSupabaseEnv } from "@hericilla/supabase-clients";
 import { useUnseenCount } from "@hericilla/push-web";
@@ -22,12 +24,25 @@ import { useAuth } from "@/lib/auth";
 
 type NavItem = { href: string; label: string; icon: ReactNode; hint: string };
 
-/** Primary nav = 7 large items (elderly-first), per master plan. */
+/** Primary nav = 7 large items (elderly-first), per master plan. Powers the mobile bottom bar. */
 export const PRIMARY_NAV: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-6 w-6" />, hint: "Your day at a glance" },
   { href: "/jobs", label: "Jobs", icon: <ClipboardList className="h-6 w-6" />, hint: "Service requests and work orders" },
   { href: "/people", label: "People", icon: <Users className="h-6 w-6" />, hint: "Clients, staff and suppliers" },
   { href: "/vehicles", label: "Vehicles", icon: <Truck className="h-6 w-6" />, hint: "Fleet, allocations and movements" },
+  { href: "/money", label: "Money", icon: <Wallet className="h-6 w-6" />, hint: "Invoices, expenses and payroll" },
+  { href: "/inbox", label: "Inbox", icon: <Inbox className="h-6 w-6" />, hint: "Enquiries, chats and announcements" },
+  { href: "/more", label: "More", icon: <Grid3X3 className="h-6 w-6" />, hint: "Everything else, grouped" },
+];
+
+/** Desktop sidebar nav = primary items plus the frequently-sought Attendance and Inventory. */
+export const SIDEBAR_NAV: NavItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-6 w-6" />, hint: "Your day at a glance" },
+  { href: "/jobs", label: "Jobs", icon: <ClipboardList className="h-6 w-6" />, hint: "Service requests and work orders" },
+  { href: "/people", label: "People", icon: <Users className="h-6 w-6" />, hint: "Clients, staff and suppliers" },
+  { href: "/attendance", label: "Attendance", icon: <CalendarCheck className="h-6 w-6" />, hint: "Who clocked in, exceptions and corrections" },
+  { href: "/vehicles", label: "Vehicles", icon: <Truck className="h-6 w-6" />, hint: "Fleet, allocations and movements" },
+  { href: "/inventory", label: "Inventory", icon: <Boxes className="h-6 w-6" />, hint: "Stock in, stock out, reorder alerts" },
   { href: "/money", label: "Money", icon: <Wallet className="h-6 w-6" />, hint: "Invoices, expenses and payroll" },
   { href: "/inbox", label: "Inbox", icon: <Inbox className="h-6 w-6" />, hint: "Enquiries, chats and announcements" },
   { href: "/more", label: "More", icon: <Grid3X3 className="h-6 w-6" />, hint: "Everything else, grouped" },
@@ -86,8 +101,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </span>
           </Link>
         </div>
-        <nav className="flex-1 px-3 space-y-1" aria-label="Main">
-          {PRIMARY_NAV.map((n) => (
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto" aria-label="Main">
+          {SIDEBAR_NAV.map((n) => (
             <Link
               key={n.href}
               href={n.href}

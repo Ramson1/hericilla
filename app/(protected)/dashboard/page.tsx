@@ -10,7 +10,7 @@ import {
   Skeleton,
   BigButton,
 } from "@hericilla/ui";
-import { ArrowRight, AlertTriangle } from "lucide-react";
+import { ArrowRight, AlertTriangle, Boxes } from "lucide-react";
 import { headCount, todayWat } from "@/lib/data";
 import { useAuth } from "@/lib/auth";
 
@@ -88,10 +88,18 @@ export default function DashboardPage() {
           <section className="mt-6" aria-label="Today">
             <h2 className="text-lg font-bold text-brand-950 mb-3">Today</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Enquiries waiting" value={kpis.enqNew} hint="New website requests" />
-              <StatCard label="Open chats" value={kpis.chatsOpen} hint="Website live chat" />
-              <StatCard label="Active jobs" value={kpis.woActive} hint="Work orders in progress" />
-              <StatCard label="Clocked in today" value={kpis.clockedToday} hint="Staff who signed in" />
+              <Link href="/inbox" className="block">
+                <StatCard label="Enquiries waiting" value={kpis.enqNew} hint="New website requests" />
+              </Link>
+              <Link href="/inbox/chat" className="block">
+                <StatCard label="Open chats" value={kpis.chatsOpen} hint="Website live chat" />
+              </Link>
+              <Link href="/jobs" className="block">
+                <StatCard label="Active jobs" value={kpis.woActive} hint="Work orders in progress" />
+              </Link>
+              <Link href="/attendance" className="block">
+                <StatCard label="Clocked in today" value={kpis.clockedToday} hint="Staff who signed in" />
+              </Link>
             </div>
           </section>
 
@@ -122,6 +130,15 @@ export default function DashboardPage() {
           <section className="mt-8" aria-label="Everything else">
             <h2 className="text-lg font-bold text-brand-950 mb-3">Everything else</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Link href="/inventory" className="rounded-[var(--radius-card)] bg-white border border-[var(--color-line)] p-6 shadow-[var(--shadow-card)] hover:border-brand-400 hover:shadow-[var(--shadow-pop)] transition flex items-start gap-4">
+                <span className="inline-flex rounded-2xl bg-brand-100 text-brand-800 p-3">
+                  <Boxes className="h-8 w-8" aria-hidden />
+                </span>
+                <span>
+                  <span className="block text-lg font-bold text-brand-950">Inventory</span>
+                  <span className="block text-base text-ink-soft">Stock levels and reorder alerts</span>
+                </span>
+              </Link>
               <StatCard label="Requests being worked" value={kpis.srOpen} hint="Service requests open" />
               <StatCard label="Completed this month" value={kpis.woDoneMonth} hint="Work orders finished" />
               <StatCard label="POs awaiting approval" value={kpis.prPending} hint="Procurement queue" />

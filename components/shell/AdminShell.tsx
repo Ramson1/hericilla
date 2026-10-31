@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -17,6 +17,8 @@ import {
   Bell,
   CalendarCheck,
   Boxes,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { hasSupabaseEnv } from "@hericilla/supabase-clients";
 import { useUnseenCount } from "@hericilla/push-web";
@@ -72,10 +74,34 @@ export const ALL_DESTINATIONS: { href: string; label: string; description: strin
   { href: "/settings", label: "Settings & Permissions", description: "Roles, rules and reminders" },
 ];
 
+/** Sidebar collapse state, remembered per browser. Read after mount so the
+    server-rendered markup always matches the first client render (no hydration drift). */
+function useSidebarCollapse(storageKey: string) {
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(storageKey) === "collapsed");
+    } catch {
+      /* storage unavailable — stay expanded */
+    }
+  }, [storageKey]);
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      window.localStorage.setItem(storageKey, next ? "collapsed" : "expanded");
+    } catch {
+      /* ignore */
+    }
+  };
+  return { collapsed, toggle };
+}
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { profile, signOut } = useAuth();
   const [query, setQuery] = useState("");
+  const { collapsed, toggle } = useSidebarCollapse("hericilla-admin-sidebar");
   const unseen = useUnseenCount(profile?.id ?? null, profile?.role ?? null);
 
   const matches = useMemo(() => {
@@ -90,40 +116,63 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen lg:flex">
-      {/* Sidebar (desktop) */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-brand-950 text-white">
-        <div className="p-5">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="" width={40} height={40} className="rounded-lg" />
-            <span className="text-base font-extrabold leading-tight">
-              Hericilla
-              <span className="block text-xs font-medium text-brand-200">Admin portal</span>
+      {/* Sidebar (desktop) — collapsible via the toggle button */}
+      <aside
+        className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-brand-950 text-white transition-[width] duration-200 ${
+          collapsed ? "lg:w-20" : "lg:w-64"
+        }`}
+      >
+        <div className={`flex items-center ${collapsed ? "lg:flex-col lg:gap-1 lg:p-3" : "gap-3 p-5"}`}>
+          <Link href="/dashboard" className={`flex items-center gap-3 ${collapsed ? "lg:justify-center" : ""}`}>
+            <span className="rounded-xl bg-white p-1">
+              <Image src="/logo.png" alt="" width={40} height={40} className="block rounded-lg" />
             </span>
+            {!collapsed && (
+              <span className="text-base font-extrabold leading-tight">
+                Hericilla
+                <span className="block text-xs font-medium text-brand-200">Admin portal</span>
+              </span>
+            )}
           </Link>
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={`p-2 rounded-lg text-brand-200 hover:bg-brand-900 hover:text-white transition ${
+              collapsed ? "lg:self-center" : "ml-auto"
+            }`}
+          >
+            {collapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
+          </button>
         </div>
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto" aria-label="Main">
           {SIDEBAR_NAV.map((n) => (
             <Link
               key={n.href}
               href={n.href}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold transition ${
-                isActive(n.href) ? "bg-white text-brand-950" : "hover:bg-brand-900"
-              }`}
+              title={collapsed ? n.label : undefined}
+              className={`flex items-center rounded-xl py-3 text-base font-semibold transition ${
+                collapsed ? "justify-center px-2" : "gap-3 px-4"
+              } ${isActive(n.href) ? "bg-white text-brand-950" : "hover:bg-brand-900"}`}
             >
               {n.icon}
-              {n.label}
+              {!collapsed && n.label}
             </Link>
           ))}
         </nav>
-        <div className="p-5 text-sm text-brand-200">Signed in as {profile?.full_name || profile?.email}</div>
+        {!collapsed && <div className="p-5 text-sm text-brand-200">Signed in as {profile?.full_name || profile?.email}</div>}
       </aside>
 
-      <div className="flex-1 lg:pl-64 pb-24 lg:pb-0">
+      <div className={`flex-1 pb-24 lg:pb-0 transition-[padding] duration-200 ${collapsed ? "lg:pl-20" : "lg:pl-64"}`}>
         {/* Top bar */}
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[var(--color-line)]">
           <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
             <Link href="/dashboard" className="lg:hidden flex items-center gap-2 font-extrabold text-brand-950">
-              <Image src="/logo.png" alt="" width={32} height={32} className="rounded" />
+              <span className="rounded-lg bg-white p-1 ring-1 ring-[var(--color-line)]">
+                <Image src="/logo.png" alt="" width={32} height={32} className="block rounded" />
+              </span>
               Hericilla
             </Link>
             <div className="relative flex-1 max-w-md ml-auto lg:ml-0">

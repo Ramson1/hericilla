@@ -68,6 +68,20 @@ export default function DashboardPage() {
         }
       />
 
+      {kpis && kpis.enqNew > 0 && (
+        <div className="mt-6 flex items-center justify-between gap-4 rounded-[var(--radius-card)] bg-danger-600 px-6 py-5 text-white shadow-[var(--shadow-card)]">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-7 w-7 shrink-0" />
+            <p className="text-base font-bold">
+              {kpis.enqNew} new website enquiry{kpis.enqNew > 1 ? "ies are" : " is"} waiting for a response
+            </p>
+          </div>
+          <Link href="/inbox">
+            <BigButton variant="secondary">Open enquiries →</BigButton>
+          </Link>
+        </div>
+      )}
+
       <HintCard
         steps={[
           "Look at the red numbers below first — they are things waiting on you.",

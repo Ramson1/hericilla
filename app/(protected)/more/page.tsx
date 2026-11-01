@@ -17,6 +17,7 @@ import {
   CalendarCheck,
   Boxes,
   Wrench,
+  ScrollText,
 } from "lucide-react";
 
 const groups = [
@@ -56,6 +57,7 @@ const groups = [
       { href: "/inbox/chat", label: "Live chat", desc: "Conversations from the website", icon: <MessageCircle className="h-8 w-8" /> },
       { href: "/cms", label: "Website CMS", desc: "Blog, testimonials, careers, page text", icon: <Globe className="h-8 w-8" /> },
       { href: "/reports", label: "Reports", desc: "The eight report families", icon: <BarChart3 className="h-8 w-8" /> },
+      { href: "/audit", label: "Audit Log", desc: "Who changed what and when", icon: <ScrollText className="h-8 w-8" /> },
       { href: "/settings", label: "Settings", desc: "Permissions, limits and rules", icon: <Settings className="h-8 w-8" /> },
     ],
   },

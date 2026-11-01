@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -19,9 +19,11 @@ import {
   Boxes,
   ChevronsLeft,
   ChevronsRight,
+  X,
 } from "lucide-react";
-import { hasSupabaseEnv } from "@hericilla/supabase-clients";
+import { hasSupabaseEnv, getSupabase } from "@hericilla/supabase-clients";
 import { useUnseenCount } from "@hericilla/push-web";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 
 type NavItem = { href: string; label: string; icon: ReactNode; hint: string };
@@ -72,6 +74,7 @@ export const ALL_DESTINATIONS: { href: string; label: string; description: strin
   { href: "/inbox/chat", label: "Inbox — Live chat", description: "Conversations from the website" },
   { href: "/cms", label: "Website CMS", description: "Blog, testimonials, careers and page text" },
   { href: "/settings", label: "Settings & Permissions", description: "Roles, rules and reminders" },
+  { href: "/audit", label: "Audit Log", description: "Who changed what and when" },
 ];
 
 /** Sidebar collapse state, remembered per browser. Read after mount so the
@@ -99,10 +102,78 @@ function useSidebarCollapse(storageKey: string) {
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const qc = useQueryClient();
   const { profile, signOut } = useAuth();
   const [query, setQuery] = useState("");
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const { collapsed, toggle } = useSidebarCollapse("hericilla-admin-sidebar");
   const unseen = useUnseenCount(profile?.id ?? null, profile?.role ?? null);
+
+  // ── Notification popover data (last 14 days unread) ──────────────────────────
+  const { data: notifItems } = useQuery({
+    queryKey: ["notif-popover", profile?.id],
+    queryFn: async () => {
+      const twoWeeksAgo = new Date(Date.now() - 14 * 86400_000).toISOString();
+      const { data: rows } = await getSupabase()
+        .from("hericilla_notification_outbox")
+        .select("id,title,body,created_at,data")
+        .or(`recipient_user_id.eq.${profile?.id},role_target.eq.${profile?.role}`)
+        .gte("created_at", twoWeeksAgo)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      const list = (rows as { id: string; title: string; body: string; created_at: string; data: Record<string, string> }[]) ?? [];
+      if (list.length === 0) return [];
+      const { data: seenRows } = await getSupabase()
+        .from("hericilla_notifications_seen")
+        .select("outbox_id")
+        .eq("user_id", profile!.id)
+        .in("outbox_id", list.map((r) => r.id));
+      const seenSet = new Set(((seenRows as { outbox_id: string }[]) ?? []).map((s) => s.outbox_id));
+      return list.filter((r) => !seenSet.has(r.id));
+    },
+    enabled: !!profile && notifOpen,
+  });
+
+  async function markSeen(id: string) {
+    await getSupabase()
+      .from("hericilla_notifications_seen")
+      .upsert({ outbox_id: id, user_id: profile!.id }, { onConflict: "outbox_id,user_id" });
+    void qc.invalidateQueries({ queryKey: ["notif-popover", profile?.id] });
+    void qc.invalidateQueries({ queryKey: ["my-notifications", profile?.id] });
+  }
+
+  async function markAllSeen() {
+    const items = notifItems ?? [];
+    if (items.length === 0) return;
+    await getSupabase()
+      .from("hericilla_notifications_seen")
+      .upsert(items.map((r) => ({ outbox_id: r.id, user_id: profile!.id })), { onConflict: "outbox_id,user_id" });
+    void qc.invalidateQueries({ queryKey: ["notif-popover", profile?.id] });
+    void qc.invalidateQueries({ queryKey: ["my-notifications", profile?.id] });
+  }
+
+  function handleNotifClick(id: string, data: Record<string, string> | null | undefined) {
+    void markSeen(id);
+    const entity = data?.entity;
+    if (entity === "hericilla_enquiries") router.push("/inbox");
+    else if (entity === "hericilla_job_applications") router.push("/cms/careers");
+    else router.push("/notifications");
+    setNotifOpen(false);
+  }
+
+  // Close popover on Escape / outside click
+  useEffect(() => {
+    if (!notifOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setNotifOpen(false); };
+    const onClick = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onClick);
+    return () => { document.removeEventListener("keydown", onKey); document.removeEventListener("mousedown", onClick); };
+  }, [notifOpen]);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -200,18 +271,61 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 </div>
               )}
             </div>
-            <Link
-              href="/notifications"
-              className="relative p-2.5 rounded-full hover:bg-brand-50 text-ink-soft"
-              aria-label={unseen > 0 ? `Notifications — ${unseen} unread` : "Notifications"}
-            >
-              <Bell className="h-6 w-6" />
-              {unseen > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1 rounded-full bg-danger-600 text-white text-sm font-bold flex items-center justify-center">
-                  {unseen > 99 ? "99+" : unseen}
-                </span>
+            <div className="relative" ref={notifRef}>
+              <button
+                type="button"
+                onClick={() => setNotifOpen((v) => !v)}
+                aria-expanded={notifOpen}
+                aria-label={unseen > 0 ? `Notifications — ${unseen} unread` : "Notifications"}
+                className="relative p-2.5 rounded-full hover:bg-brand-50 text-ink-soft"
+              >
+                <Bell className="h-6 w-6" />
+                {unseen > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1 rounded-full bg-danger-600 text-white text-sm font-bold flex items-center justify-center">
+                    {unseen > 99 ? "99+" : unseen}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-[var(--color-line)] bg-white shadow-[var(--shadow-pop)] z-50 overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-[var(--color-line)] px-4 py-3">
+                    <span className="text-sm font-bold text-brand-950">Notifications</span>
+                    <button type="button" onClick={() => setNotifOpen(false)} className="p-1 rounded hover:bg-brand-50 text-ink-soft" aria-label="Close">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {(notifItems ?? []).length === 0 ? (
+                      <p className="px-4 py-8 text-center text-sm text-ink-soft">You&apos;re all caught up!</p>
+                    ) : (
+                      (notifItems ?? []).map((n) => (
+                        <button
+                          key={n.id}
+                          type="button"
+                          onClick={() => handleNotifClick(n.id, n.data)}
+                          className="w-full block px-4 py-3 text-left hover:bg-brand-50 border-b border-[var(--color-line)] last:border-b-0"
+                        >
+                          <span className="block text-sm font-bold text-brand-950">{n.title}</span>
+                          <span className="mt-0.5 block text-xs text-ink-soft line-clamp-2">{n.body}</span>
+                          <span className="mt-1 block text-xs text-ink-soft">{new Date(n.created_at).toLocaleString()}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between border-t border-[var(--color-line)] px-4 py-2">
+                    {(notifItems ?? []).length > 0 && (
+                      <button type="button" onClick={() => void markAllSeen()} className="text-sm font-semibold text-brand-700 hover:underline">
+                        Mark all as read
+                      </button>
+                    )}
+                    <Link href="/notifications" className="text-sm font-semibold text-brand-700 hover:underline ml-auto" onClick={() => setNotifOpen(false)}>
+                      View all notifications
+                    </Link>
+                  </div>
+                </div>
               )}
-            </Link>
+            </div>
             <button
               onClick={() => void signOut()}
               className="flex items-center gap-2 rounded-[var(--radius-btn)] border-2 border-brand-200 px-4 py-2 font-semibold text-brand-800 hover:bg-brand-50"

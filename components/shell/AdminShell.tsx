@@ -234,6 +234,22 @@ export function AdminShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         {!collapsed && <div className="p-5 text-sm text-brand-200">Signed in as {profile?.full_name || profile?.email}</div>}
+        <div className={`border-t border-brand-900 p-3 ${collapsed ? "flex justify-center" : "text-center"}`}>
+          <a
+            href="https://blackboxtech.online"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-2 text-xs text-brand-200 hover:text-white ${collapsed ? "justify-center" : "flex-wrap justify-center"}`}
+            title="Black-Box Tech"
+          >
+            <Image src="/blackboxtech.jpg" alt="Black-Box Tech logo" width={24} height={24} className="h-6 w-6 rounded-full" />
+            {!collapsed && (
+              <span>
+                Designed and Developed by <strong className="font-bold">Black-Box Tech</strong>, and Ayo Ogundipe.
+              </span>
+            )}
+          </a>
+        </div>
       </aside>
 
       <div className={`flex-1 pb-24 lg:pb-0 transition-[padding] duration-200 ${collapsed ? "lg:pl-20" : "lg:pl-64"}`}>

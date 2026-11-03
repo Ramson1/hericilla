@@ -3,18 +3,20 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BigButton, BigInput, BigPasswordInput, Card } from "@hericilla/ui";
-import { getSupabase, hasSupabaseEnv } from "@hericilla/supabase-clients";
+import { AuthFunctionError, hasSupabaseEnv, invokeAuthFunction } from "@hericilla/supabase-clients";
 
 type Phase = "checking" | "set-password" | "send-link" | "link-sent";
 
 /**
- * Handles the Supabase password-recovery landing (redirect emails land here with
- * #access_token...&type=recovery). supabase-js picks the recovery session out of
- * the URL automatically; we then let the user choose a new password via updateUser.
+ * Custom (non-GoTrue) password recovery. The reset link our Edge Function emails is
+ * /auth/reset-password?token=<raw>&email=<email>. If a token is present we ask for a
+ * new password and exchange the token via auth-reset-password; otherwise we start the
+ * "send me a link" flow via auth-forgot-password.
  */
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("checking");
+  const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -22,39 +24,16 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!hasSupabaseEnv()) {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("token") ?? "";
+    const e = params.get("email") ?? "";
+    if (t) {
+      setToken(t);
+      setEmail(e);
+      setPhase("set-password");
+    } else {
       setPhase("send-link");
-      return;
     }
-    const s = getSupabase();
-    let cancelled = false;
-
-    // The email link carries #...type=recovery (implicit) or ?code=...type=recovery (PKCE).
-    const linkIsRecovery =
-      window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery");
-
-    // PASSWORD_RECOVERY fires once the auth client has finished ingesting the link —
-    // a one-shot getSession() check races that async handover and misses it.
-    const { data: sub } = s.auth.onAuthStateChange((event) => {
-      if (cancelled) return;
-      if (event === "PASSWORD_RECOVERY" || (linkIsRecovery && event === "SIGNED_IN")) {
-        setPhase("set-password");
-      }
-    });
-
-    void s.auth.getSession().then(({ data }) => {
-      if (cancelled) return;
-      const flagged =
-        (data.session as unknown as { user?: { app_metadata?: { recovery?: string } } } | null)?.user
-          ?.app_metadata?.recovery === "password";
-      if (linkIsRecovery || flagged) setPhase("set-password");
-      else setPhase("send-link");
-    });
-
-    return () => {
-      cancelled = true;
-      sub.subscription.unsubscribe();
-    };
   }, []);
 
   async function sendLink(e: React.FormEvent) {
@@ -62,14 +41,10 @@ export default function ResetPasswordPage() {
     setError(null);
     setBusy(true);
     try {
-      const s = getSupabase();
-      const { error: err } = await s.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
-      if (err) throw err;
+      await invokeAuthFunction("auth-forgot-password", { email });
       setPhase("link-sent");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send the reset email. Please try again.");
+      setError(err instanceof AuthFunctionError ? err.message : "Could not send the reset email. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -88,14 +63,11 @@ export default function ResetPasswordPage() {
     }
     setBusy(true);
     try {
-      const s = getSupabase();
-      const { error: err } = await s.auth.updateUser({ password });
-      if (err) throw err;
-      await s.auth.signOut();
+      await invokeAuthFunction("auth-reset-password", { token, password });
       router.replace("/login");
     } catch (err) {
       setError(
-        err instanceof Error
+        err instanceof AuthFunctionError
           ? err.message
           : "Could not save the new password. Open the email link again and try once more.",
       );
@@ -191,8 +163,8 @@ export default function ResetPasswordPage() {
         {phase === "link-sent" && (
           <div className="mt-6">
             <p className="rounded-lg bg-success-100 p-4 text-success-800 font-semibold">
-              Reset link sent to <strong>{email}</strong>. Open it on this device — the page will ask you
-              for a new password.
+              If an account exists for <strong>{email}</strong>, a reset link is on its way. Open it on this device —
+              the page will ask you for a new password.
             </p>
             <BigButton variant="secondary" size="lg" className="w-full mt-4" onClick={() => setPhase("send-link")}>
               Send to a different email

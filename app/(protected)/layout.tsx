@@ -8,12 +8,13 @@ import { useAuth } from "@/lib/auth";
 import { hasSupabaseEnv } from "@hericilla/supabase-clients";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { ready, user, profile, blockedReason, signOut } = useAuth();
+  const { ready, userId, profile, blockedReason, mustReset, signOut } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (ready && !user) router.replace("/login");
-  }, [ready, user, router]);
+    if (ready && !userId) router.replace("/login");
+    else if (ready && userId && !blockedReason && mustReset) router.replace("/auth/change-password");
+  }, [ready, userId, blockedReason, mustReset, router]);
 
   if (!hasSupabaseEnv()) {
     return (
@@ -24,7 +25,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!ready || !user) {
+  if (!ready || !userId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Skeleton className="h-8 w-48" />

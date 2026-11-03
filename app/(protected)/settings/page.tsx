@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BigButton,
@@ -15,7 +15,7 @@ import {
   Skeleton,
   StatusBadge,
 } from "@hericilla/ui";
-import { getSupabase } from "@hericilla/supabase-clients";
+import { getSupabase, AuthFunctionError, invokeAuthFunction } from "@hericilla/supabase-clients";
 import { APP_ROLES, statusLabel, type AppRole } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
 import { money } from "@/lib/data";
@@ -131,6 +131,7 @@ function UsersPanel({ canManage }: { canManage: boolean }) {
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [invited, setInvited] = useState<{ email: string; password: string } | null>(null);
+  const [pwTarget, setPwTarget] = useState<UserRow | null>(null);
 
   const { data: users, isPending } = useQuery({
     queryKey: ["settings", "users"],
@@ -220,13 +221,16 @@ function UsersPanel({ canManage }: { canManage: boolean }) {
                       value={d.status ?? u.status}
                       onChange={(e) => setDraft((s) => ({ ...s, [u.id]: { ...d, status: e.target.value } }))}
                     />
-                    <div className="sm:col-span-3">
+                    <div className="sm:col-span-3 flex flex-wrap gap-2">
                       <BigButton
                         variant={dirty ? "primary" : "ghost"}
                         disabled={!dirty || savingId === u.id}
                         onClick={() => saveUser(u)}
                       >
                         {savingId === u.id ? "Saving…" : dirty ? "Save changes" : "No changes"}
+                      </BigButton>
+                      <BigButton variant="secondary" onClick={() => setPwTarget(u)}>
+                        Set password
                       </BigButton>
                     </div>
                   </div>
@@ -248,6 +252,8 @@ function UsersPanel({ canManage }: { canManage: boolean }) {
         }}
         invited={invited}
       />
+
+      <SetPasswordModal target={pwTarget} onClose={() => setPwTarget(null)} />
     </div>
   );
 }
@@ -278,16 +284,23 @@ function InviteModal({
   async function invite() {
     setBusy(true);
     setError(null);
-    const { data, error: fnErr } = await getSupabase().functions.invoke("admin-invite", {
-      body: { full_name: fullName, email, role, department_id: dept || null, phone: phone || null },
-    });
-    setBusy(false);
-    if (fnErr || !data) {
-      setError(fnErr?.message ?? "The invite could not be sent. Check the details and try again.");
-      return;
+    try {
+      const res = await invokeAuthFunction<{ temp_password?: string }>("auth-admin-create-user", {
+        full_name: fullName,
+        email,
+        role,
+        department_id: dept || null,
+        phone: phone || null,
+      });
+      onDone(email, res.temp_password ?? "");
+    } catch (err) {
+      setError(
+        err instanceof AuthFunctionError
+          ? err.message
+          : "The account could not be created. Check the details and try again.",
+      );
+      setBusy(false);
     }
-    const res = data as { temp_password?: string };
-    onDone(email, res.temp_password ?? "");
   }
 
   return (
@@ -302,7 +315,7 @@ function InviteModal({
             <p className="select-all text-xl font-bold tracking-wide">{invited.password}</p>
           </div>
           <p className="text-base text-ink-soft">
-            Ask them to sign in with this password and immediately use “Forgot password” to set their own.
+            Share this temporary password with them. On their first sign-in they will be asked to choose a new one.
           </p>
           <BigButton variant="secondary" onClick={onClose}>Done</BigButton>
         </div>
@@ -320,6 +333,89 @@ function InviteModal({
             onClick={invite}
           >
             {busy ? "Creating account…" : "Create account"}
+          </BigButton>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+// ── Set password (admin-driven forced reset) ─────────────────────────────────
+
+function SetPasswordModal({ target, onClose }: { target: UserRow | null; onClose: () => void }) {
+  const [password, setPassword] = useState("");
+  const [forceReset, setForceReset] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  // Reset local state whenever a new target is picked.
+  useEffect(() => {
+    if (target) {
+      setPassword("");
+      setForceReset(true);
+      setError(null);
+      setDone(false);
+    }
+  }, [target]);
+
+  async function submit() {
+    if (!target) return;
+    setError(null);
+    if (password.length < 8) {
+      setError("Use a password of at least 8 characters.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await invokeAuthFunction("auth-admin-set-password", {
+        profile_id: target.id,
+        password,
+        must_reset: forceReset,
+      });
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof AuthFunctionError ? err.message : "Could not set the password. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal open={Boolean(target)} title={target ? `Set password · ${target.full_name || target.email || ""}` : "Set password"} onClose={onClose}>
+      {done ? (
+        <div className="space-y-4">
+          <p className="text-base font-semibold text-success-700">
+            Password updated for {target?.email}.
+          </p>
+          <p className="text-base text-ink-soft">
+            {forceReset
+              ? "They will be asked to choose a new password at their next sign-in."
+              : "They can keep signing in with this password."}
+          </p>
+          <BigButton variant="secondary" onClick={onClose}>Done</BigButton>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          <p className="mb-3 text-base text-ink-soft">
+            Give {target?.full_name || "this user"} a password they can sign in with.
+          </p>
+          <BigInput
+            label="New password"
+            type="text"
+            autoComplete="off"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <BigCheckbox
+            label="Force them to choose a new password at next sign-in"
+            checked={forceReset}
+            onChange={setForceReset}
+          />
+          {error && <p className="mb-3 text-base font-semibold text-danger-600">{error}</p>}
+          <BigButton variant="primary" disabled={busy || password.length < 8} onClick={submit}>
+            {busy ? "Saving…" : "Set password"}
           </BigButton>
         </div>
       )}

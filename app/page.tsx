@@ -6,13 +6,13 @@ import { Skeleton } from "@hericilla/ui";
 import { useAuth } from "@/lib/auth";
 
 export default function AdminRoot() {
-  const { ready, user } = useAuth();
+  const { ready, userId } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!ready) return;
-    router.replace(user ? "/dashboard" : "/login");
-  }, [ready, user, router]);
+    router.replace(userId ? "/dashboard" : "/login");
+  }, [ready, userId, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

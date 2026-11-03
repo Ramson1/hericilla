@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { QueryProvider } from "@/components/QueryProvider";
-import { RecoveryRedirect } from "@/components/RecoveryRedirect";
 
 export const metadata: Metadata = {
   title: { template: "%s · Hericilla Admin", default: "Hericilla Admin" },
@@ -16,7 +15,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthProvider>
           <QueryProvider>
-            <RecoveryRedirect />
             {children}
           </QueryProvider>
         </AuthProvider>

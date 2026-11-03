@@ -7,18 +7,32 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   ClipboardList,
-  Users,
+  Wrench,
+  Boxes,
+  Send,
   Truck,
+  Users,
+  CalendarCheck,
+  Banknote,
   Wallet,
+  Package,
+  Building2,
+  Contact,
+  FileText,
   Inbox,
-  Grid3X3,
+  MessageCircle,
+  Megaphone,
+  BellRing,
+  Globe,
+  BarChart3,
+  ScrollText,
+  Settings,
   LogOut,
   Search,
   Bell,
-  CalendarCheck,
-  Boxes,
   ChevronsLeft,
   ChevronsRight,
+  Menu,
   X,
 } from "lucide-react";
 import { hasSupabaseEnv, getSupabase } from "@hericilla/supabase-clients";
@@ -28,54 +42,82 @@ import { useAuth } from "@/lib/auth";
 
 type NavItem = { href: string; label: string; icon: ReactNode; hint: string };
 
-/** Primary nav = 7 large items (elderly-first), per master plan. Powers the mobile bottom bar. */
-export const PRIMARY_NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-6 w-6" />, hint: "Your day at a glance" },
-  { href: "/jobs", label: "Jobs", icon: <ClipboardList className="h-6 w-6" />, hint: "Service requests and work orders" },
-  { href: "/people", label: "People", icon: <Users className="h-6 w-6" />, hint: "Clients, staff and suppliers" },
-  { href: "/vehicles", label: "Vehicles", icon: <Truck className="h-6 w-6" />, hint: "Fleet, allocations and movements" },
-  { href: "/money", label: "Money", icon: <Wallet className="h-6 w-6" />, hint: "Invoices, expenses and payroll" },
-  { href: "/inbox", label: "Inbox", icon: <Inbox className="h-6 w-6" />, hint: "Enquiries, chats and announcements" },
-  { href: "/more", label: "More", icon: <Grid3X3 className="h-6 w-6" />, hint: "Everything else, grouped" },
+/** Grouped navigation — every destination appears exactly once (the old "More" page is gone). */
+export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+  {
+    title: "Overview",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" />, hint: "Your day at a glance" },
+    ],
+  },
+  {
+    title: "Jobs & Delivery",
+    items: [
+      { href: "/jobs", label: "Jobs", icon: <ClipboardList className="h-5 w-5" />, hint: "Service requests" },
+      { href: "/work-orders", label: "Work orders", icon: <Wrench className="h-5 w-5" />, hint: "Approved jobs with WO numbers" },
+      { href: "/packing", label: "Packing & Removal", icon: <Boxes className="h-5 w-5" />, hint: "Move jobs and handovers" },
+      { href: "/deliveries", label: "Deliveries", icon: <Send className="h-5 w-5" />, hint: "Proof of delivery and trip costs" },
+      { href: "/vehicles", label: "Vehicles", icon: <Truck className="h-5 w-5" />, hint: "Fleet, allocations and movements" },
+    ],
+  },
+  {
+    title: "People",
+    items: [
+      { href: "/people", label: "Staff", icon: <Users className="h-5 w-5" />, hint: "Employee register, roles and licences" },
+      { href: "/attendance", label: "Attendance", icon: <CalendarCheck className="h-5 w-5" />, hint: "Who clocked in, exceptions and corrections" },
+      { href: "/payroll", label: "Payroll", icon: <Banknote className="h-5 w-5" />, hint: "Salary runs and payslips" },
+    ],
+  },
+  {
+    title: "Finance & Stock",
+    items: [
+      { href: "/money", label: "Finance & Billing", icon: <Wallet className="h-5 w-5" />, hint: "Invoices, expenses and payments" },
+      { href: "/procurement", label: "Procurement", icon: <Package className="h-5 w-5" />, hint: "Requests, approvals and orders" },
+      { href: "/inventory", label: "Inventory", icon: <Boxes className="h-5 w-5" />, hint: "Stock in, stock out, reorder alerts" },
+    ],
+  },
+  {
+    title: "Contacts & Documents",
+    items: [
+      { href: "/clients", label: "Clients", icon: <Building2 className="h-5 w-5" />, hint: "Companies we serve" },
+      { href: "/suppliers", label: "Suppliers", icon: <Contact className="h-5 w-5" />, hint: "Who we buy from" },
+      { href: "/documents", label: "Contracts & Documents", icon: <FileText className="h-5 w-5" />, hint: "Every file with expiry reminders" },
+    ],
+  },
+  {
+    title: "Communication",
+    items: [
+      { href: "/inbox", label: "Enquiries", icon: <Inbox className="h-5 w-5" />, hint: "Website enquiries awaiting action" },
+      { href: "/inbox/chat", label: "Live chat", icon: <MessageCircle className="h-5 w-5" />, hint: "Conversations from the website" },
+      { href: "/inbox/announcements", label: "Announcements", icon: <Megaphone className="h-5 w-5" />, hint: "Broadcasts to staff" },
+      { href: "/notifications", label: "Notifications", icon: <BellRing className="h-5 w-5" />, hint: "Everything sent to you" },
+    ],
+  },
+  {
+    title: "Insights & Admin",
+    items: [
+      { href: "/cms", label: "Website CMS", icon: <Globe className="h-5 w-5" />, hint: "Blog, testimonials, careers and page text" },
+      { href: "/reports", label: "Reports", icon: <BarChart3 className="h-5 w-5" />, hint: "The eight report families" },
+      { href: "/audit", label: "Audit Log", icon: <ScrollText className="h-5 w-5" />, hint: "Who changed what and when" },
+      { href: "/settings", label: "Settings", icon: <Settings className="h-5 w-5" />, hint: "Roles, rules and reminders" },
+    ],
+  },
 ];
 
-/** Desktop sidebar nav = primary items plus the frequently-sought Attendance and Inventory. */
-export const SIDEBAR_NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-6 w-6" />, hint: "Your day at a glance" },
-  { href: "/jobs", label: "Jobs", icon: <ClipboardList className="h-6 w-6" />, hint: "Service requests and work orders" },
-  { href: "/people", label: "People", icon: <Users className="h-6 w-6" />, hint: "Clients, staff and suppliers" },
-  { href: "/attendance", label: "Attendance", icon: <CalendarCheck className="h-6 w-6" />, hint: "Who clocked in, exceptions and corrections" },
-  { href: "/vehicles", label: "Vehicles", icon: <Truck className="h-6 w-6" />, hint: "Fleet, allocations and movements" },
-  { href: "/inventory", label: "Inventory", icon: <Boxes className="h-6 w-6" />, hint: "Stock in, stock out, reorder alerts" },
-  { href: "/money", label: "Money", icon: <Wallet className="h-6 w-6" />, hint: "Invoices, expenses and payroll" },
-  { href: "/inbox", label: "Inbox", icon: <Inbox className="h-6 w-6" />, hint: "Enquiries, chats and announcements" },
-  { href: "/more", label: "More", icon: <Grid3X3 className="h-6 w-6" />, hint: "Everything else, grouped" },
-];
+const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
-/** Flat destination list powering the “Find anything” search. */
-export const ALL_DESTINATIONS: { href: string; label: string; description: string }[] = [
-  { href: "/dashboard", label: "Dashboard", description: "KPIs, today's attendance and what needs you" },
-  { href: "/jobs", label: "Jobs — Service requests", description: "Create and track requests from new to closed" },
-  { href: "/work-orders", label: "Work orders", description: "Every approved job with its WO number" },
-  { href: "/clients", label: "Clients", description: "Companies we serve, contacts and contracts" },
-  { href: "/suppliers", label: "Suppliers", description: "Who we buy from and how they perform" },
-  { href: "/procurement", label: "Procurement", description: "Purchase requests, approvals and orders" },
-  { href: "/packing", label: "Packing & Removal", description: "Move jobs, item lists and handovers" },
-  { href: "/inventory", label: "Inventory", description: "Stock in, stock out, reorder alerts" },
-  { href: "/documents", label: "Contracts & Documents", description: "Every file with expiry reminders" },
-  { href: "/money", label: "Finance & Billing", description: "Invoices, payments and ageing" },
-  { href: "/people", label: "Staff", description: "Employee register, roles and licences" },
-  { href: "/attendance", label: "Attendance & Shifts", description: "Who clocked in, exceptions and corrections" },
-  { href: "/payroll", label: "Salary Allocator", description: "Payroll runs, payslips and approvals" },
-  { href: "/vehicles", label: "Vehicles", description: "Fleet register and live movement board" },
-  { href: "/deliveries", label: "Deliveries & trip costs", description: "POD verification and expense approvals" },
-  { href: "/reports", label: "Reports", description: "The eight report families" },
-  { href: "/inbox", label: "Inbox — Enquiries", description: "Website enquiries awaiting action" },
-  { href: "/inbox/chat", label: "Inbox — Live chat", description: "Conversations from the website" },
-  { href: "/cms", label: "Website CMS", description: "Blog, testimonials, careers and page text" },
-  { href: "/settings", label: "Settings & Permissions", description: "Roles, rules and reminders" },
-  { href: "/audit", label: "Audit Log", description: "Who changed what and when" },
-];
+/** Flat destination list powering the "Find anything" search — derived so it never drifts from the nav. */
+export const ALL_DESTINATIONS: { href: string; label: string; description: string }[] = NAV_ITEMS.map((n) => ({
+  href: n.href,
+  label: n.label,
+  description: n.hint,
+}));
+
+/** The four most-used screens for the mobile bottom bar; the rest live in the Menu drawer. */
+const MOBILE_PRIMARY_HREFS = ["/dashboard", "/jobs", "/inbox", "/money"];
+const MOBILE_PRIMARY: NavItem[] = MOBILE_PRIMARY_HREFS.map(
+  (href) => NAV_ITEMS.find((n) => n.href === href) ?? NAV_ITEMS[0],
+);
 
 /** Sidebar collapse state, remembered per browser. Read after mount so the
     server-rendered markup always matches the first client render (no hydration drift). */
@@ -100,6 +142,63 @@ function useSidebarCollapse(storageKey: string) {
   return { collapsed, toggle };
 }
 
+/** The single nav item that best matches the current path (longest prefix wins, so /inbox/chat
+    highlights "Live chat" and not also "Enquiries"). */
+function useActiveHref(pathname: string): string {
+  return useMemo(() => {
+    let best = "";
+    for (const n of NAV_ITEMS) {
+      if (pathname === n.href || pathname.startsWith(n.href + "/")) {
+        if (n.href.length > best.length) best = n.href;
+      }
+    }
+    return best;
+  }, [pathname]);
+}
+
+function GroupedNav({
+  collapsed,
+  activeHref,
+  onNavigate,
+}: {
+  collapsed?: boolean;
+  activeHref: string;
+  onNavigate?: () => void;
+}) {
+  return (
+    <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2" aria-label="Main">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.title}>
+          {!collapsed && (
+            <p className="px-4 pb-1 text-xs font-bold uppercase tracking-wider text-brand-300/80">{group.title}</p>
+          )}
+          <div className="space-y-1">
+            {group.items.map((n) => {
+              const active = n.href === activeHref;
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  title={collapsed ? n.label : n.hint}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  className={`relative flex items-center rounded-xl py-2.5 text-base font-semibold transition ${
+                    collapsed ? "justify-center px-2" : "gap-3 px-4"
+                  } ${active ? "bg-white text-brand-950 shadow-sm" : "text-brand-100 hover:bg-brand-900 hover:text-white"}`}
+                >
+                  {active && !collapsed && <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r bg-brand-600" />}
+                  <span className={active ? "text-brand-700" : "text-brand-200"}>{n.icon}</span>
+                  {!collapsed && n.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -107,9 +206,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const { profile, signOut } = useAuth();
   const [query, setQuery] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const { collapsed, toggle } = useSidebarCollapse("hericilla-admin-sidebar");
   const unseen = useUnseenCount(profile?.id ?? null, profile?.role ?? null);
+  const activeHref = useActiveHref(pathname);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
 
   // ── Notification popover data (last 14 days unread) ──────────────────────────
   const { data: notifItems } = useQuery({
@@ -183,7 +289,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     ).slice(0, 6);
   }, [query]);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) => href === activeHref;
 
   return (
     <div className="min-h-screen lg:flex">
@@ -193,8 +299,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
           collapsed ? "lg:w-20" : "lg:w-64"
         }`}
       >
-        <div className={`flex items-center ${collapsed ? "lg:flex-col lg:gap-1 lg:p-3" : "gap-3 p-5"}`}>
-          <Link href="/dashboard" className={`flex items-center gap-3 ${collapsed ? "lg:justify-center" : ""}`}>
+        <div className={`flex items-center border-b border-brand-900 ${collapsed ? "flex-col gap-2 p-3" : "gap-3 p-5"}`}>
+          <Link href="/dashboard" className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
             <span className="rounded-xl bg-white p-1">
               <Image src="/logo.png" alt="" width={40} height={40} className="block rounded-lg" />
             </span>
@@ -212,28 +318,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
             aria-expanded={!collapsed}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={`p-2 rounded-lg text-brand-200 hover:bg-brand-900 hover:text-white transition ${
-              collapsed ? "lg:self-center" : "ml-auto"
+              collapsed ? "self-center" : "ml-auto"
             }`}
           >
             {collapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
           </button>
         </div>
-        <nav className="flex-1 px-3 space-y-1 overflow-y-auto" aria-label="Main">
-          {SIDEBAR_NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              title={collapsed ? n.label : undefined}
-              className={`flex items-center rounded-xl py-3 text-base font-semibold transition ${
-                collapsed ? "justify-center px-2" : "gap-3 px-4"
-              } ${isActive(n.href) ? "bg-white text-brand-950" : "hover:bg-brand-900"}`}
-            >
-              {n.icon}
-              {!collapsed && n.label}
-            </Link>
-          ))}
-        </nav>
-        {!collapsed && <div className="p-5 text-sm text-brand-200">Signed in as {profile?.full_name || profile?.email}</div>}
+
+        <GroupedNav collapsed={collapsed} activeHref={activeHref} />
+
+        {!collapsed && <div className="px-5 py-3 text-sm text-brand-200">Signed in as {profile?.full_name || profile?.email}</div>}
         <div className={`border-t border-brand-900 p-3 ${collapsed ? "flex justify-center" : "text-center"}`}>
           <a
             href="https://blackboxtech.online"
@@ -245,7 +339,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Image src="/blackboxtech.jpg" alt="Black-Box Tech logo" width={24} height={24} className="h-6 w-6 rounded-full" />
             {!collapsed && (
               <span>
-                Designed and Developed by <strong className="font-bold">Black-Box Tech</strong>, and Ayo Ogundipe.
+                Designed and Developed by <strong className="font-bold">Black-Box Tech</strong> and Ayo Ogundipe.
               </span>
             )}
           </a>
@@ -256,6 +350,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
         {/* Top bar */}
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[var(--color-line)]">
           <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open menu"
+              className="lg:hidden p-2 -ml-2 rounded-lg text-brand-900 hover:bg-brand-50"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
             <Link href="/dashboard" className="lg:hidden flex items-center gap-2 font-extrabold text-brand-950">
               <span className="rounded-lg bg-white p-1 ring-1 ring-[var(--color-line)]">
                 <Image src="/logo.png" alt="" width={32} height={32} className="block rounded" />
@@ -355,12 +457,34 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
       </div>
 
+      {/* Mobile slide-over drawer with the full grouped navigation */}
+      {drawerOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Menu">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setDrawerOpen(false)} />
+          <aside className="relative flex h-full w-72 max-w-[80%] flex-col bg-brand-950 text-white shadow-xl">
+            <div className="flex items-center gap-3 border-b border-brand-900 p-5">
+              <span className="rounded-xl bg-white p-1">
+                <Image src="/logo.png" alt="" width={36} height={36} className="block rounded-lg" />
+              </span>
+              <span className="text-base font-extrabold leading-tight">
+                Hericilla
+                <span className="block text-xs font-medium text-brand-200">Admin portal</span>
+              </span>
+              <button type="button" onClick={() => setDrawerOpen(false)} aria-label="Close menu" className="ml-auto p-2 rounded-lg hover:bg-brand-900">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <GroupedNav activeHref={activeHref} onNavigate={() => setDrawerOpen(false)} />
+          </aside>
+        </div>
+      )}
+
       {/* Bottom nav (mobile) */}
       <nav
         className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[var(--color-line)] flex"
         aria-label="Main"
       >
-        {PRIMARY_NAV.map((n) => (
+        {MOBILE_PRIMARY.map((n) => (
           <Link
             key={n.href}
             href={n.href}
@@ -369,9 +493,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
             }`}
           >
             {n.icon}
-            {n.label}
+            {n.label.split(" ")[0]}
           </Link>
         ))}
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          className="flex-1 flex flex-col items-center gap-0.5 py-2 text-xs font-bold text-ink-soft"
+        >
+          <Menu className="h-6 w-6" />
+          Menu
+        </button>
       </nav>
     </div>
   );

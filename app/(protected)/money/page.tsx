@@ -20,6 +20,8 @@ import {
 import { getSupabase } from "@hericilla/supabase-clients";
 import { useAuth } from "@/lib/auth";
 import { money } from "@/lib/data";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type Invoice = {
   id: string;
@@ -42,6 +44,25 @@ type Expense = {
 };
 
 const FINANCE_ROLES = ["super_admin", "admin", "finance_officer"];
+
+const INVOICE_COLUMNS: ExportColumn<Invoice>[] = [
+  { key: "ref_no", label: "Invoice" },
+  { key: "client_name", label: "Client" },
+  { key: "issue_date", label: "Issued", kind: "date" },
+  { key: "due_date", label: "Due", kind: "date" },
+  { key: "total", label: "Total", kind: "money" },
+  { key: "amount_paid", label: "Paid", kind: "money" },
+  { key: "status", label: "Status", kind: "status" },
+];
+
+const EXPENSE_COLUMNS: ExportColumn<Expense>[] = [
+  { key: "occurred_at", label: "Date", kind: "date" },
+  { key: "category", label: "Category", format: (e) => e.category.replace(/_/g, " ") },
+  { key: "description", label: "Description" },
+  { key: "amount", label: "Amount", kind: "money" },
+  { key: "submitter_name", label: "Submitted By" },
+  { key: "status", label: "Status", kind: "status" },
+];
 
 export default function MoneyPage() {
   const router = useRouter();
@@ -242,49 +263,56 @@ export default function MoneyPage() {
       {tab === "invoices" &&
         (isPending ? (
           <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
-        ) : (invoices ?? []).length === 0 ? (
-          <div className="mt-6">
-            <EmptyState title="No invoices yet" teach="When a job is done or a quotation approved, press “+ New invoice” to bill the client." />
-          </div>
         ) : (
-          <div className="mt-6 space-y-3">
-            {(invoices ?? []).map((i) => (
-              <RowCard
-                key={i.id}
-                title={`${i.ref_no} — ${i.client_name ?? "Client"}`}
-                subtitle={`${money(i.total)}${i.amount_paid > 0 ? ` · ${money(i.amount_paid)} received` : ""}${i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}`}
-                badge={<StatusBadge status={i.status} />}
-                onClick={() => router.push(`/money/invoice/${i.id}`)}
-              />
-            ))}
-          </div>
+          <DataToolbar title="Invoices" columns={INVOICE_COLUMNS} rows={invoices ?? []} dateKey="issue_date" className="mt-6">
+            {(shown) =>
+              shown.length === 0 ? (
+                <EmptyState title="No invoices yet" teach="When a job is done or a quotation approved, press “+ New invoice” to bill the client." />
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {shown.map((i) => (
+                    <RowCard
+                      key={i.id}
+                      title={`${i.ref_no} — ${i.client_name ?? "Client"}`}
+                      subtitle={`${money(i.total)}${i.amount_paid > 0 ? ` · ${money(i.amount_paid)} received` : ""}${i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}`}
+                      badge={<StatusBadge status={i.status} />}
+                      onClick={() => router.push(`/money/invoice/${i.id}`)}
+                    />
+                  ))}
+                </div>
+              )
+            }
+          </DataToolbar>
         ))}
 
-      {tab === "expenses" &&
-        ((expenses ?? []).length === 0 ? (
-          <div className="mt-6">
-            <EmptyState title="No expenses logged" teach="Fuel, tolls, hires — press “+ Log expense” the day you spend it, with the receipt." />
-          </div>
-        ) : (
-          <div className="mt-6 space-y-3">
-            {(expenses ?? []).map((e) => (
-              <RowCard
-                key={e.id}
-                title={`${money(e.amount)} — ${e.description || e.category.replace(/_/g, " ")}`}
-                subtitle={`${new Date(e.occurred_at).toLocaleDateString()}${e.submitter_name ? ` · by ${e.submitter_name}` : ""}`}
-                badge={<StatusBadge status={e.status === "pending" ? "pending" : e.status} />}
-                actions={
-                  isFinance && e.status === "pending" && e.submitter_name !== undefined ? (
-                    <div className="flex gap-2">
-                      <BigButton size="md" variant="success" onClick={() => void decideExpense(e.id, true)}>Approve</BigButton>
-                      <BigButton size="md" variant="danger" onClick={() => void decideExpense(e.id, false)}>Reject</BigButton>
-                    </div>
-                  ) : undefined
-                }
-              />
-            ))}
-          </div>
-        ))}
+      {tab === "expenses" && (
+        <DataToolbar title="Expenses" columns={EXPENSE_COLUMNS} rows={expenses ?? []} dateKey="occurred_at" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState title="No expenses logged" teach="Fuel, tolls, hires — press “+ Log expense” the day you spend it, with the receipt." />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((e) => (
+                  <RowCard
+                    key={e.id}
+                    title={`${money(e.amount)} — ${e.description || e.category.replace(/_/g, " ")}`}
+                    subtitle={`${new Date(e.occurred_at).toLocaleDateString()}${e.submitter_name ? ` · by ${e.submitter_name}` : ""}`}
+                    badge={<StatusBadge status={e.status === "pending" ? "pending" : e.status} />}
+                    actions={
+                      isFinance && e.status === "pending" && e.submitter_name !== undefined ? (
+                        <div className="flex gap-2">
+                          <BigButton size="md" variant="success" onClick={() => void decideExpense(e.id, true)}>Approve</BigButton>
+                          <BigButton size="md" variant="danger" onClick={() => void decideExpense(e.id, false)}>Reject</BigButton>
+                        </div>
+                      ) : undefined
+                    }
+                  />
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
+      )}
 
       <Modal open={creating} title="New invoice" onClose={() => { setCreating(false); setError(null); }} wide>
         <Wizard

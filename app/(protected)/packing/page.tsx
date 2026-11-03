@@ -19,6 +19,8 @@ import {
 } from "@hericilla/ui";
 import { getSupabase } from "@hericilla/supabase-clients";
 import { useAuth } from "@/lib/auth";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type PackingJob = {
   id: string;
@@ -27,9 +29,20 @@ type PackingJob = {
   destination_address: string;
   stage: string;
   scheduled_at: string | null;
+  created_at: string;
   work_order_id: string;
   wo_number?: string;
 };
+
+const PACKING_COLUMNS: ExportColumn<PackingJob>[] = [
+  { key: "ref_no", label: "Ref" },
+  { key: "wo_number", label: "Work order" },
+  { key: "origin_address", label: "From" },
+  { key: "destination_address", label: "To" },
+  { key: "stage", label: "Stage", kind: "status" },
+  { key: "scheduled_at", label: "Planned", kind: "date" },
+  { key: "created_at", label: "Created", kind: "date" },
+];
 
 export default function PackingPage() {
   const router = useRouter();
@@ -122,9 +135,6 @@ export default function PackingPage() {
     void qc.invalidateQueries({ queryKey: ["packing-jobs"] });
   }
 
-  const active = (jobs ?? []).filter((j) => j.stage !== "completed");
-  const done = (jobs ?? []).filter((j) => j.stage === "completed");
-
   return (
     <div>
       <PageHeader
@@ -145,19 +155,19 @@ export default function PackingPage() {
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
         </div>
-      ) : (jobs ?? []).length === 0 ? (
-        <div className="mt-6">
-          <EmptyState
-            title="No packing jobs yet"
-            teach="When a client asks you to move an office or a house, press “+ New packing job” and pick its work order."
-          />
-        </div>
       ) : (
-        <>
-          <section className="mt-6 space-y-3">
-            <h2 className="text-lg font-bold text-brand-950">Ongoing ({active.length})</h2>
-            {active.length === 0 && <p className="text-base text-ink-soft">Nothing in progress right now.</p>}
-            {active.map((j) => (
+        <DataToolbar title="Packing & Removal" columns={PACKING_COLUMNS} rows={jobs ?? []} dateKey="created_at" className="mt-6">
+          {(shown) => {
+            if (shown.length === 0)
+              return (
+                <EmptyState
+                  title="No packing jobs yet"
+                  teach="When a client asks you to move an office or a house, press “+ New packing job” and pick its work order."
+                />
+              );
+            const ongoing = shown.filter((j) => j.stage !== "completed");
+            const completed = shown.filter((j) => j.stage === "completed");
+            const card = (j: PackingJob) => (
               <RowCard
                 key={j.id}
                 title={`${j.ref_no} — ${j.origin_address} → ${j.destination_address}`}
@@ -165,23 +175,24 @@ export default function PackingPage() {
                 badge={<StatusBadge status={j.stage} />}
                 onClick={() => router.push(`/packing/${j.id}`)}
               />
-            ))}
-          </section>
-          {done.length > 0 && (
-            <section className="mt-10 space-y-3">
-              <h2 className="text-lg font-bold text-brand-950">Completed ({done.length})</h2>
-              {done.map((j) => (
-                <RowCard
-                  key={j.id}
-                  title={`${j.ref_no} — ${j.origin_address} → ${j.destination_address}`}
-                  subtitle={j.wo_number}
-                  badge={<StatusBadge status={j.stage} />}
-                  onClick={() => router.push(`/packing/${j.id}`)}
-                />
-              ))}
-            </section>
-          )}
-        </>
+            );
+            return (
+              <div className="mt-4 space-y-10">
+                <section className="space-y-3">
+                  <h2 className="text-lg font-bold text-brand-950">Ongoing ({ongoing.length})</h2>
+                  {ongoing.length === 0 && <p className="text-base text-ink-soft">Nothing in progress right now.</p>}
+                  {ongoing.map(card)}
+                </section>
+                {completed.length > 0 && (
+                  <section className="space-y-3">
+                    <h2 className="text-lg font-bold text-brand-950">Completed ({completed.length})</h2>
+                    {completed.map(card)}
+                  </section>
+                )}
+              </div>
+            );
+          }}
+        </DataToolbar>
       )}
 
       <Modal open={creating} title="New packing job" onClose={() => setCreating(false)} wide>

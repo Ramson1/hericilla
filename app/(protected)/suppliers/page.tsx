@@ -25,6 +25,8 @@ import {
   type SupplierCategory,
 } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type Supplier = {
   id: string;
@@ -41,6 +43,7 @@ type Supplier = {
   quality_score: number;
   reliability_score: number;
   notes: string | null;
+  created_at: string;
 };
 
 const BLANK = {
@@ -55,6 +58,16 @@ const BLANK = {
   lead_time_days: "",
   notes: "",
 };
+
+const SUPPLIER_COLUMNS: ExportColumn<Supplier>[] = [
+  { key: "name", label: "Supplier" },
+  { key: "category", label: "Category", format: (s) => SUPPLIER_CATEGORY_LABELS[s.category] ?? "" },
+  { key: "phone", label: "Phone" },
+  { key: "email", label: "Email" },
+  { key: "payment_terms", label: "Payment Terms" },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "created_at", label: "Added", kind: "date" },
+];
 
 export default function SuppliersPage() {
   const qc = useQueryClient();
@@ -165,47 +178,51 @@ export default function SuppliersPage() {
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
-      ) : visible.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState title="No suppliers here yet" teach="Press “+ New supplier” for the trucking company or materials vendor you buy from most." />
-        </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {visible.map((s) => (
-            <RowCard
-              key={s.id}
-              title={s.name}
-              subtitle={
-                <>
-                  <span>{SUPPLIER_CATEGORY_LABELS[s.category]}</span>
-                  {s.phone && <span> · {s.phone}</span>}
-                  {s.lead_time_days != null && <span> · {s.lead_time_days}d lead time</span>}
-                </>
-              }
-              badge={<StatusBadge status={s.status} />}
-              actions={
-                <span className="flex gap-2 items-center">
-                  <span className="text-base text-ink-soft" title="Delivery / Quality / Reliability">
-                    ★ {Number(s.delivery_score).toFixed(1)}/{Number(s.quality_score).toFixed(1)}/{Number(s.reliability_score).toFixed(1)}
-                  </span>
-                  {s.status !== "approved" && (
-                    <BigButton size="md" variant="success" onClick={() => void setStatus(s, "approved")}>
-                      Approve
-                    </BigButton>
-                  )}
-                  {s.status !== "suspended" && s.status === "approved" && (
-                    <BigButton size="md" variant="ghost" onClick={() => void setStatus(s, "suspended")}>
-                      Suspend
-                    </BigButton>
-                  )}
-                  <BigButton size="md" variant="secondary" onClick={() => startEdit(s)}>
-                    Edit
-                  </BigButton>
-                </span>
-              }
-            />
-          ))}
-        </div>
+        <DataToolbar title="Suppliers" columns={SUPPLIER_COLUMNS} rows={visible} dateKey="created_at" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState title="No suppliers here yet" teach="Press “+ New supplier” for the trucking company or materials vendor you buy from most." />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((s) => (
+                  <RowCard
+                    key={s.id}
+                    title={s.name}
+                    subtitle={
+                      <>
+                        <span>{SUPPLIER_CATEGORY_LABELS[s.category]}</span>
+                        {s.phone && <span> · {s.phone}</span>}
+                        {s.lead_time_days != null && <span> · {s.lead_time_days}d lead time</span>}
+                      </>
+                    }
+                    badge={<StatusBadge status={s.status} />}
+                    actions={
+                      <span className="flex gap-2 items-center">
+                        <span className="text-base text-ink-soft" title="Delivery / Quality / Reliability">
+                          ★ {Number(s.delivery_score).toFixed(1)}/{Number(s.quality_score).toFixed(1)}/{Number(s.reliability_score).toFixed(1)}
+                        </span>
+                        {s.status !== "approved" && (
+                          <BigButton size="md" variant="success" onClick={() => void setStatus(s, "approved")}>
+                            Approve
+                          </BigButton>
+                        )}
+                        {s.status !== "suspended" && s.status === "approved" && (
+                          <BigButton size="md" variant="ghost" onClick={() => void setStatus(s, "suspended")}>
+                            Suspend
+                          </BigButton>
+                        )}
+                        <BigButton size="md" variant="secondary" onClick={() => startEdit(s)}>
+                          Edit
+                        </BigButton>
+                      </span>
+                    }
+                  />
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       <Modal open={open} title={editId ? "Edit supplier" : "New supplier"} onClose={() => setOpen(false)} wide>

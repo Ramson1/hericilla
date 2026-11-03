@@ -11,6 +11,8 @@ import { MovementsPanel } from "@/components/fleet/Movements";
 import { MaintenancePanel } from "@/components/fleet/Maintenance";
 import { InspectionsPanel } from "@/components/fleet/Inspections";
 import { IncidentsPanel } from "@/components/fleet/Incidents";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 import {
   daysUntil,
   type FleetBoardRow,
@@ -31,6 +33,19 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "maintenance", label: "Maintenance" },
   { key: "inspections", label: "Inspections" },
   { key: "incidents", label: "Incidents" },
+];
+
+const VEHICLE_COLUMNS: ExportColumn<VehicleRow>[] = [
+  { key: "reg_no", label: "Reg No" },
+  { key: "make", label: "Make" },
+  { key: "model", label: "Model" },
+  { key: "year", label: "Year", kind: "number" },
+  { key: "vehicle_type", label: "Type", kind: "status" },
+  { key: "capacity", label: "Capacity" },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "odometer_km", label: "Odometer (km)", kind: "number" },
+  { key: "insurance_expiry", label: "Insurance Expiry", kind: "date" },
+  { key: "inspection_expiry", label: "Inspection Expiry", kind: "date" },
 ];
 
 export default function VehiclesPage() {
@@ -145,7 +160,11 @@ export default function VehiclesPage() {
       </div>
 
       {tab === "board" && <BoardPanel board={board ?? []} />}
-      {tab === "register" && <RegisterPanel vehicles={all} />}
+      {tab === "register" && (
+        <DataToolbar title="Vehicle Register" columns={VEHICLE_COLUMNS} rows={all} className="mt-6">
+          {(shown) => <RegisterPanel vehicles={shown} />}
+        </DataToolbar>
+      )}
       {tab === "allocations" && <AllocationsPanel vehicles={all} drivers={drivers ?? []} workOrders={workOrders ?? []} sites={sites ?? []} />}
       {tab === "movements" && <MovementsPanel vehicles={all} />}
       {tab === "maintenance" && <MaintenancePanel vehicles={all} />}

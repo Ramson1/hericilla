@@ -14,6 +14,8 @@ import {
 } from "@hericilla/ui";
 import { getSupabase } from "@hericilla/supabase-clients";
 import { SERVICE_LABELS, type ServiceType } from "@hericilla/types";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type WoRow = {
   id: string;
@@ -34,6 +36,16 @@ const FILTERS = [
   { key: "done", label: "Finished", match: (w: WoRow) => ["completed", "closed"].includes(w.status) },
   { key: "all", label: "Everything", match: () => true },
 ] as const;
+
+const WO_COLUMNS: ExportColumn<WoRow>[] = [
+  { key: "wo_number", label: "WO Number" },
+  { key: "title", label: "Title" },
+  { key: "client_name", label: "Client" },
+  { key: "service_type", label: "Service", format: (w) => SERVICE_LABELS[w.service_type] ?? "" },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "created_at", label: "Created", kind: "date" },
+  { key: "completed_at", label: "Completed", kind: "date" },
+];
 
 export default function WorkOrdersPage() {
   const search = useSearchParams();
@@ -99,43 +111,47 @@ export default function WorkOrdersPage() {
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
-      ) : visible.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState
-            title="No work orders in this view"
-            teach="A work order is born when a client approves a quotation. Open a job under “Jobs”, add a quotation and press “Mark approved”."
-          />
-        </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {visible.map((w) => (
-            <div key={w.id} className={w.id === focus ? "rounded-[var(--radius-card)] ring-4 ring-accent-400" : undefined}>
-              <RowCard
-                title={w.wo_number}
-                subtitle={
-                  <>
-                    <span>{w.title}</span>
-                    <span> · {SERVICE_LABELS[w.service_type]}</span>
-                    {w.client_name && <span> · {w.client_name}</span>}
-                  </>
-                }
-                badge={
-                  <span className="flex gap-2 items-center">
-                    <StatusBadge status={w.status} />
-                    {w.completed_at && <span className="text-base text-ink-soft">done {new Date(w.completed_at).toLocaleDateString()}</span>}
-                  </span>
-                }
-                actions={
-                  w.sr_id ? (
-                    <BigButton size="md" variant="secondary" onClick={() => (window.location.href = `/jobs/${w.sr_id}`)}>
-                      Open job {w.sr_ref}
-                    </BigButton>
-                  ) : undefined
-                }
+        <DataToolbar title="Work orders" columns={WO_COLUMNS} rows={visible} dateKey="created_at" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState
+                title="No work orders in this view"
+                teach="A work order is born when a client approves a quotation. Open a job under “Jobs”, add a quotation and press “Mark approved”."
               />
-            </div>
-          ))}
-        </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((w) => (
+                  <div key={w.id} className={w.id === focus ? "rounded-[var(--radius-card)] ring-4 ring-accent-400" : undefined}>
+                    <RowCard
+                      title={w.wo_number}
+                      subtitle={
+                        <>
+                          <span>{w.title}</span>
+                          <span> · {SERVICE_LABELS[w.service_type]}</span>
+                          {w.client_name && <span> · {w.client_name}</span>}
+                        </>
+                      }
+                      badge={
+                        <span className="flex gap-2 items-center">
+                          <StatusBadge status={w.status} />
+                          {w.completed_at && <span className="text-base text-ink-soft">done {new Date(w.completed_at).toLocaleDateString()}</span>}
+                        </span>
+                      }
+                      actions={
+                        w.sr_id ? (
+                          <BigButton size="md" variant="secondary" onClick={() => (window.location.href = `/jobs/${w.sr_id}`)}>
+                            Open job {w.sr_ref}
+                          </BigButton>
+                        ) : undefined
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
     </div>
   );

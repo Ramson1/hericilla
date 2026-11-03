@@ -20,6 +20,8 @@ import { getSupabase } from "@hericilla/supabase-clients";
 import { STOCK_MOVEMENT_TYPES, statusLabel } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
 import { money } from "@/lib/data";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type StockRow = {
   id: string;
@@ -45,6 +47,32 @@ type MovementRow = {
 type AlertRow = { item_id: string; on_hand: number; min_level: number; alerted_at: string; item_name?: string };
 
 const ADD_TYPES = new Set(["received", "returned"]);
+
+const STOCK_COLUMNS: ExportColumn<StockRow>[] = [
+  { key: "name", label: "Item" },
+  { key: "sku", label: "SKU" },
+  { key: "quantity_on_hand", label: "On Hand", kind: "number" },
+  { key: "uom", label: "Unit" },
+  { key: "location", label: "Location" },
+  { key: "unit_value", label: "Unit Value", kind: "money" },
+  { key: "stock_value", label: "Stock Value", kind: "money" },
+  { key: "needs_reorder", label: "Low?" },
+];
+
+const MOVEMENT_COLUMNS: ExportColumn<MovementRow>[] = [
+  { key: "item_name", label: "Item" },
+  { key: "movement_type", label: "Movement", kind: "status" },
+  { key: "quantity", label: "Quantity", kind: "number" },
+  { key: "note", label: "Note" },
+  { key: "occurred_at", label: "When", kind: "date" },
+];
+
+const ALERT_COLUMNS: ExportColumn<AlertRow>[] = [
+  { key: "item_name", label: "Item" },
+  { key: "on_hand", label: "On Hand", kind: "number" },
+  { key: "min_level", label: "Minimum", kind: "number" },
+  { key: "alerted_at", label: "Flagged", kind: "date" },
+];
 
 export default function InventoryPage() {
   const qc = useQueryClient();
@@ -201,41 +229,47 @@ export default function InventoryPage() {
       {tab === "stock" &&
         (isPending ? (
           <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
-        ) : (stock ?? []).length === 0 ? (
-          <div className="mt-6">
-            <EmptyState title="The store list is empty" teach="Press “+ New item” to add the first material you keep count of." />
-          </div>
         ) : (
-          <div className="mt-6 space-y-3">
-            {(stock ?? []).map((r) => (
-              <RowCard
-                key={r.id}
-                title={`${r.name} (${r.sku})`}
-                subtitle={`${Number(r.quantity_on_hand)} ${r.uom} on hand${r.location ? ` · ${r.location}` : ""} · worth ${money(r.stock_value)}`}
-                badge={r.needs_reorder ? <StatusBadge status="low" /> : undefined}
-                onClick={() => { setMove({ ...move, item_id: r.id }); setMoveOpen(true); }}
-              />
-            ))}
-          </div>
+          <DataToolbar title="Stock Levels" columns={STOCK_COLUMNS} rows={stock ?? []} className="mt-6">
+            {(shown) =>
+              shown.length === 0 ? (
+                <EmptyState title="The store list is empty" teach="Press “+ New item” to add the first material you keep count of." />
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {shown.map((r) => (
+                    <RowCard
+                      key={r.id}
+                      title={`${r.name} (${r.sku})`}
+                      subtitle={`${Number(r.quantity_on_hand)} ${r.uom} on hand${r.location ? ` · ${r.location}` : ""} · worth ${money(r.stock_value)}`}
+                      badge={r.needs_reorder ? <StatusBadge status="low" /> : undefined}
+                      onClick={() => { setMove({ ...move, item_id: r.id }); setMoveOpen(true); }}
+                    />
+                  ))}
+                </div>
+              )
+            }
+          </DataToolbar>
         ))}
 
       {tab === "movements" && (
-        (movements ?? []).length === 0 ? (
-          <div className="mt-6">
-            <EmptyState title="No movements yet" teach="Every time something arrives or leaves the store, press “+ Record movement”." />
-          </div>
-        ) : (
-          <div className="mt-6 space-y-3">
-            {(movements ?? []).map((m) => (
-              <RowCard
-                key={m.id}
-                title={`${m.item_name} — ${statusLabel(m.movement_type)} ${ADD_TYPES.has(m.movement_type) ? "+" : "−"}${Number(m.quantity)}`}
-                subtitle={`${new Date(m.occurred_at).toLocaleString()}${m.note ? ` · ${m.note}` : ""}`}
-                badge={<StatusBadge status={m.movement_type} />}
-              />
-            ))}
-          </div>
-        )
+        <DataToolbar title="Stock Movements" columns={MOVEMENT_COLUMNS} rows={movements ?? []} dateKey="occurred_at" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState title="No movements yet" teach="Every time something arrives or leaves the store, press “+ Record movement”." />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((m) => (
+                  <RowCard
+                    key={m.id}
+                    title={`${m.item_name} — ${statusLabel(m.movement_type)} ${ADD_TYPES.has(m.movement_type) ? "+" : "−"}${Number(m.quantity)}`}
+                    subtitle={`${new Date(m.occurred_at).toLocaleString()}${m.note ? ` · ${m.note}` : ""}`}
+                    badge={<StatusBadge status={m.movement_type} />}
+                  />
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       {tab === "alerts" && (
@@ -248,22 +282,24 @@ export default function InventoryPage() {
               </BigButton>
             </div>
           </Card>
-          {(alerts ?? []).length === 0 ? (
-            <div className="mt-4">
-              <EmptyState title="Nothing is running low" teach="When an item drops to its minimum level it will appear here with a red badge." />
-            </div>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {(alerts ?? []).map((a) => (
-                <RowCard
-                  key={a.item_id}
-                  title={a.item_name ?? "Item"}
-                  subtitle={`${Number(a.on_hand)} on hand · minimum ${Number(a.min_level)} · flagged ${new Date(a.alerted_at).toLocaleDateString()}`}
-                  badge={<StatusBadge status="low" />}
-                />
-              ))}
-            </div>
-          )}
+          <DataToolbar title="Low-stock Alerts" columns={ALERT_COLUMNS} rows={alerts ?? []} dateKey="alerted_at" className="mt-6">
+            {(shown) =>
+              shown.length === 0 ? (
+                <EmptyState title="Nothing is running low" teach="When an item drops to its minimum level it will appear here with a red badge." />
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {shown.map((a) => (
+                    <RowCard
+                      key={a.item_id}
+                      title={a.item_name ?? "Item"}
+                      subtitle={`${Number(a.on_hand)} on hand · minimum ${Number(a.min_level)} · flagged ${new Date(a.alerted_at).toLocaleDateString()}`}
+                      badge={<StatusBadge status="low" />}
+                    />
+                  ))}
+                </div>
+              )
+            }
+          </DataToolbar>
         </div>
       )}
 

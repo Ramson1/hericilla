@@ -16,9 +16,11 @@ import {
   YAxis,
 } from "recharts";
 import { BigButton, BigInput, EmptyState, HintCard, PageHeader, Skeleton } from "@hericilla/ui";
+import { FileText, FileSpreadsheet, FileType2 } from "lucide-react";
 import { getSupabase } from "@hericilla/supabase-clients";
 import { statusLabel } from "@hericilla/types";
 import { money } from "@/lib/data";
+import { exportCsv, exportDocx, exportPdf, type ExportColumn } from "@/lib/export";
 
 type ReportKey =
   | "margins"
@@ -268,24 +270,12 @@ export default function ReportsPage() {
     return list.slice(0, 14);
   }, [list, report]);
 
-  const exportCsv = () => {
-    const header = report.cols.map((c) => c.label).join(",");
-    const lines = list.map((r) =>
-      report.cols
-        .map((c) => {
-          const v = r[c.key];
-          const s = c.kind === "status" ? statusLabel(String(v ?? "")) : String(v ?? "");
-          return `"${s.replaceAll('"', '""')}"`;
-        })
-        .join(","),
-    );
-    const blob = new Blob([`${header}\n${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${key}-report.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const exportCols = report.cols as unknown as ExportColumn[];
+  const exportName = `${key}-report-${new Date().toISOString().slice(0, 10)}`;
+  const doExport = (format: "pdf" | "csv" | "docx") => {
+    if (format === "pdf") exportPdf(report.title, exportCols, list, exportName);
+    else if (format === "csv") exportCsv(report.title, exportCols, list, exportName);
+    else exportDocx(report.title, exportCols, list, exportName);
   };
 
   return (
@@ -294,9 +284,17 @@ export default function ReportsPage() {
         title="Reports & Analytics"
         purpose="The eight report families of the operation — pick one, set the period if needed, then read the chart or export it."
         actions={
-          <BigButton variant="secondary" onClick={exportCsv} disabled={list.length === 0}>
-            Export CSV
-          </BigButton>
+          <div className="flex flex-wrap gap-2">
+            <BigButton variant="secondary" icon={<FileText className="h-5 w-5" />} onClick={() => doExport("pdf")} disabled={list.length === 0}>
+              Export PDF
+            </BigButton>
+            <BigButton variant="secondary" icon={<FileSpreadsheet className="h-5 w-5" />} onClick={() => doExport("csv")} disabled={list.length === 0}>
+              Export CSV
+            </BigButton>
+            <BigButton variant="secondary" icon={<FileType2 className="h-5 w-5" />} onClick={() => doExport("docx")} disabled={list.length === 0}>
+              Export DOCX
+            </BigButton>
+          </div>
         }
       />
       <HintCard

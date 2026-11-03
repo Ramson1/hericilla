@@ -17,6 +17,8 @@ import { getSupabase } from "@hericilla/supabase-clients";
 import { statusLabel } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
 import { money } from "@/lib/data";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type Tab = "pods" | "expenses";
 
@@ -52,6 +54,24 @@ interface ExpenseRow {
   job_ref: string | null;
   driver_name: string | null;
 }
+
+const POD_COLUMNS: ExportColumn<PodRow>[] = [
+  { key: "job_ref", label: "Job" },
+  { key: "recipient_name", label: "Received By" },
+  { key: "driver_name", label: "Driver" },
+  { key: "outcome", label: "Outcome", kind: "status" },
+  { key: "delivered_at", label: "Delivered", kind: "date" },
+  { key: "verified_at", label: "Verified", kind: "date" },
+];
+
+const DELIVERY_EXPENSE_COLUMNS: ExportColumn<ExpenseRow>[] = [
+  { key: "expense_type", label: "Type", kind: "status" },
+  { key: "amount", label: "Amount", kind: "money" },
+  { key: "job_ref", label: "Job" },
+  { key: "driver_name", label: "Driver" },
+  { key: "occurred_at", label: "Date", kind: "date" },
+  { key: "status", label: "Status", kind: "status" },
+];
 
 export default function DeliveriesPage() {
   const [tab, setTab] = useState<Tab>("pods");
@@ -134,37 +154,43 @@ function PodsPanel() {
   };
 
   if (isPending) return <Skeleton className="h-40" />;
-  const pendingList = (pods ?? []).filter((p) => !p.verified_at);
-  const doneList = (pods ?? []).filter((p) => p.verified_at);
 
   return (
-    <div className="space-y-4">
-      {error ? <p className="rounded-xl bg-danger-100 p-4 font-semibold text-danger-800">{error}</p> : null}
+    <DataToolbar title="Proof of Delivery" columns={POD_COLUMNS} rows={pods ?? []} dateKey="delivered_at">
+      {(shown) => {
+        const pendingList = shown.filter((p) => !p.verified_at);
+        const doneList = shown.filter((p) => p.verified_at);
+        return (
+          <div className="space-y-4">
+            {error ? <p className="rounded-xl bg-danger-100 p-4 font-semibold text-danger-800">{error}</p> : null}
 
-      <h2 className="text-lg font-extrabold text-brand-950">Waiting for verification ({pendingList.length})</h2>
-      {pendingList.length === 0 ? (
-        <EmptyState
-          title="No deliveries waiting for you"
-          teach="When drivers send proof of delivery from their app, it appears here for you to check the photos and verify."
-        />
-      ) : (
-        pendingList.map((pod) => <PodCard key={pod.id} pod={pod} onVerify={() => void verify(pod)} busy={busyId === pod.id} />)
-      )}
+            <h2 className="text-lg font-extrabold text-brand-950">Waiting for verification ({pendingList.length})</h2>
+            {pendingList.length === 0 ? (
+              <EmptyState
+                title="No deliveries waiting for you"
+                teach="When drivers send proof of delivery from their app, it appears here for you to check the photos and verify."
+              />
+            ) : (
+              pendingList.map((pod) => <PodCard key={pod.id} pod={pod} onVerify={() => void verify(pod)} busy={busyId === pod.id} />)
+            )}
 
-      {doneList.length > 0 ? (
-        <>
-          <h2 className="pt-4 text-lg font-extrabold text-brand-950">Already verified ({doneList.length})</h2>
-          {doneList.map((pod) => (
-            <RowCard
-              key={pod.id}
-              title={`${pod.job_ref ?? "Job"} — ${pod.recipient_name ?? "receiver not stated"}`}
-              subtitle={`Outcome: ${statusLabel(pod.outcome)} · Verified ${pod.verified_at ? new Date(pod.verified_at).toLocaleString() : ""}`}
-              badge={<StatusBadge status="verified" />}
-            />
-          ))}
-        </>
-      ) : null}
-    </div>
+            {doneList.length > 0 ? (
+              <>
+                <h2 className="pt-4 text-lg font-extrabold text-brand-950">Already verified ({doneList.length})</h2>
+                {doneList.map((pod) => (
+                  <RowCard
+                    key={pod.id}
+                    title={`${pod.job_ref ?? "Job"} — ${pod.recipient_name ?? "receiver not stated"}`}
+                    subtitle={`Outcome: ${statusLabel(pod.outcome)} · Verified ${pod.verified_at ? new Date(pod.verified_at).toLocaleString() : ""}`}
+                    badge={<StatusBadge status="verified" />}
+                  />
+                ))}
+              </>
+            ) : null}
+          </div>
+        );
+      }}
+    </DataToolbar>
   );
 }
 
@@ -299,73 +325,77 @@ function ExpensesPanel() {
   if (isPending) return <Skeleton className="h-40" />;
 
   return (
-    <div className="space-y-4">
-      {error ? <p className="rounded-xl bg-danger-100 p-4 font-semibold text-danger-800">{error}</p> : null}
-      <div className="flex gap-3">
-        <BigButton variant={filter === "pending" ? "primary" : "secondary"} onClick={() => setFilter("pending")}>
-          Waiting for approval
-        </BigButton>
-        <BigButton variant={filter === "all" ? "primary" : "secondary"} onClick={() => setFilter("all")}>
-          All claims
-        </BigButton>
-      </div>
-
-      {(expenses ?? []).length === 0 ? (
-        <EmptyState
-          title={filter === "pending" ? "No expenses waiting" : "No expenses recorded yet"}
-          teach="Drivers photograph fuel and toll receipts in their app. Each claim lands here for finance to approve or reject."
-        />
-      ) : (
-        (expenses ?? []).map((e) => {
-          const own = e.submitted_by != null && e.submitted_by === profile?.id;
-          return (
-            <RowCard
-              key={e.id}
-              title={`${statusLabel(e.expense_type)} — ${money(Number(e.amount))}`}
-              subtitle={
-                <>
-                  <span>
-                    {e.driver_name ?? "Driver"} · {e.job_ref ?? "no job"} · {e.occurred_at}
-                  </span>
-                  {e.reject_reason ? <span className="mt-1 block font-semibold text-danger-800">Reason: {e.reject_reason}</span> : null}
-                </>
-              }
-              badge={<StatusBadge status={e.status} />}
-              actions={
-                e.status === "pending" ? (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <BigButton variant="success" onClick={() => void decide(e, "approved")} disabled={busy || own}>
-                      {busy ? "Working…" : "Approve"}
-                    </BigButton>
-                    <BigButton variant="danger" onClick={() => setRejecting(e)} disabled={own}>
-                      Reject
-                    </BigButton>
-                    {own ? <p className="text-base font-semibold text-warning-800">You submitted this claim — another officer must decide.</p> : null}
-                  </div>
-                ) : undefined
-              }
-            />
-          );
-        })
-      )}
-
-      <Modal open={rejecting != null} title={`Reject ${statusLabel(rejecting?.expense_type ?? "")} of ${money(Number(rejecting?.amount ?? 0))}?`} onClose={() => setRejecting(null)}>
+    <DataToolbar title="Trip Expenses" columns={DELIVERY_EXPENSE_COLUMNS} rows={expenses ?? []} dateKey="occurred_at">
+      {(shown) => (
         <div className="space-y-4">
-          <p className="text-base text-ink-soft">Tell the driver why — they will see this on their phone when it syncs.</p>
-          <BigTextarea label="Reason (required)" value={reason} onChange={(ev) => setReason(ev.target.value)} />
-          <BigButton
-            variant="danger"
-            onClick={() => {
-              if (rejecting) void decide(rejecting, "rejected", reason.trim());
-              setRejecting(null);
-              setReason("");
-            }}
-            disabled={reason.trim().length < 5 || busy}
-          >
-            {busy ? "Working…" : "Reject this claim"}
-          </BigButton>
+          {error ? <p className="rounded-xl bg-danger-100 p-4 font-semibold text-danger-800">{error}</p> : null}
+          <div className="flex gap-3">
+            <BigButton variant={filter === "pending" ? "primary" : "secondary"} onClick={() => setFilter("pending")}>
+              Waiting for approval
+            </BigButton>
+            <BigButton variant={filter === "all" ? "primary" : "secondary"} onClick={() => setFilter("all")}>
+              All claims
+            </BigButton>
+          </div>
+
+          {shown.length === 0 ? (
+            <EmptyState
+              title={filter === "pending" ? "No expenses waiting" : "No expenses recorded yet"}
+              teach="Drivers photograph fuel and toll receipts in their app. Each claim lands here for finance to approve or reject."
+            />
+          ) : (
+            shown.map((e) => {
+              const own = e.submitted_by != null && e.submitted_by === profile?.id;
+              return (
+                <RowCard
+                  key={e.id}
+                  title={`${statusLabel(e.expense_type)} — ${money(Number(e.amount))}`}
+                  subtitle={
+                    <>
+                      <span>
+                        {e.driver_name ?? "Driver"} · {e.job_ref ?? "no job"} · {e.occurred_at}
+                      </span>
+                      {e.reject_reason ? <span className="mt-1 block font-semibold text-danger-800">Reason: {e.reject_reason}</span> : null}
+                    </>
+                  }
+                  badge={<StatusBadge status={e.status} />}
+                  actions={
+                    e.status === "pending" ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <BigButton variant="success" onClick={() => void decide(e, "approved")} disabled={busy || own}>
+                          {busy ? "Working…" : "Approve"}
+                        </BigButton>
+                        <BigButton variant="danger" onClick={() => setRejecting(e)} disabled={own}>
+                          Reject
+                        </BigButton>
+                        {own ? <p className="text-base font-semibold text-warning-800">You submitted this claim — another officer must decide.</p> : null}
+                      </div>
+                    ) : undefined
+                  }
+                />
+              );
+            })
+          )}
+
+          <Modal open={rejecting != null} title={`Reject ${statusLabel(rejecting?.expense_type ?? "")} of ${money(Number(rejecting?.amount ?? 0))}?`} onClose={() => setRejecting(null)}>
+            <div className="space-y-4">
+              <p className="text-base text-ink-soft">Tell the driver why — they will see this on their phone when it syncs.</p>
+              <BigTextarea label="Reason (required)" value={reason} onChange={(ev) => setReason(ev.target.value)} />
+              <BigButton
+                variant="danger"
+                onClick={() => {
+                  if (rejecting) void decide(rejecting, "rejected", reason.trim());
+                  setRejecting(null);
+                  setReason("");
+                }}
+                disabled={reason.trim().length < 5 || busy}
+              >
+                {busy ? "Working…" : "Reject this claim"}
+              </BigButton>
+            </div>
+          </Modal>
         </div>
-      </Modal>
-    </div>
+      )}
+    </DataToolbar>
   );
 }

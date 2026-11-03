@@ -18,6 +18,8 @@ import {
 import { getSupabase } from "@hericilla/supabase-clients";
 import { DOC_TYPES, statusLabel } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type DocRow = {
   id: string;
@@ -38,6 +40,16 @@ type DocRow = {
 function daysUntil(dateStr: string): number {
   return Math.ceil((new Date(dateStr + "T00:00:00").getTime() - Date.now()) / 86_400_000);
 }
+
+const DOC_COLUMNS: ExportColumn<DocRow>[] = [
+  { key: "title", label: "Document" },
+  { key: "client_name", label: "Client" },
+  { key: "doc_type", label: "Type", format: (d) => statusLabel(d.doc_type) },
+  { key: "sensitivity", label: "Sensitivity" },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "expiry_date", label: "Expires", kind: "date" },
+  { key: "created_at", label: "Uploaded", kind: "date" },
+];
 
 export default function DocumentsPage() {
   const qc = useQueryClient();
@@ -187,33 +199,37 @@ export default function DocumentsPage() {
 
       {isPending ? (
         <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
-      ) : shown.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState title="No documents here yet" teach="Press “+ Upload document” to file a contract, permit, receipt or certificate." />
-        </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {shown.map((d) => (
-            <RowCard
-              key={d.id}
-              title={d.title}
-              subtitle={`${statusLabel(d.doc_type)}${d.client_name ? ` · ${d.client_name}` : ""}${d.expiry_date ? ` · expires ${d.expiry_date}` : ""}${d.sensitivity !== "internal" ? ` · ${d.sensitivity}` : ""}`}
-              badge={<StatusBadge status={d.status} />}
-              actions={
-                <div className="flex gap-2 flex-wrap justify-end">
-                  <BigButton size="md" variant="secondary" disabled={busy} onClick={() => void openFile(d)}>Open</BigButton>
-                  {d.status === "active" && (
-                    <BigButton size="md" variant="ghost" onClick={() => void setStatus(d.id, "archived")}>Archive</BigButton>
-                  )}
-                  {d.status !== "active" && (
-                    <BigButton size="md" variant="ghost" onClick={() => void setStatus(d.id, "active")}>Re-activate</BigButton>
-                  )}
-                  <BigButton size="md" variant="ghost" className="text-danger-800" onClick={() => setDeleteId(d.id)}>Delete</BigButton>
-                </div>
-              }
-            />
-          ))}
-        </div>
+        <DataToolbar title="Contracts & Documents" columns={DOC_COLUMNS} rows={shown} dateKey="created_at" className="mt-6">
+          {(listed) =>
+            listed.length === 0 ? (
+              <EmptyState title="No documents here yet" teach="Press “+ Upload document” to file a contract, permit, receipt or certificate." />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {listed.map((d) => (
+                  <RowCard
+                    key={d.id}
+                    title={d.title}
+                    subtitle={`${statusLabel(d.doc_type)}${d.client_name ? ` · ${d.client_name}` : ""}${d.expiry_date ? ` · expires ${d.expiry_date}` : ""}${d.sensitivity !== "internal" ? ` · ${d.sensitivity}` : ""}`}
+                    badge={<StatusBadge status={d.status} />}
+                    actions={
+                      <div className="flex gap-2 flex-wrap justify-end">
+                        <BigButton size="md" variant="secondary" disabled={busy} onClick={() => void openFile(d)}>Open</BigButton>
+                        {d.status === "active" && (
+                          <BigButton size="md" variant="ghost" onClick={() => void setStatus(d.id, "archived")}>Archive</BigButton>
+                        )}
+                        {d.status !== "active" && (
+                          <BigButton size="md" variant="ghost" onClick={() => void setStatus(d.id, "active")}>Re-activate</BigButton>
+                        )}
+                        <BigButton size="md" variant="ghost" className="text-danger-800" onClick={() => setDeleteId(d.id)}>Delete</BigButton>
+                      </div>
+                    }
+                  />
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       <Modal open={uploadOpen} title="Upload a document" onClose={() => { setUploadOpen(false); setError(null); }}>

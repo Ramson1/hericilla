@@ -18,6 +18,8 @@ import {
 import { getSupabase } from "@hericilla/supabase-clients";
 import { useAuth } from "@/lib/auth";
 import { money } from "@/lib/data";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type ClientRow = {
   id: string;
@@ -26,8 +28,18 @@ type ClientRow = {
   city: string | null;
   email: string | null;
   phone: string | null;
+  created_at: string;
   deleted_at: string | null;
 };
+
+const CLIENT_COLUMNS: ExportColumn<ClientRow>[] = [
+  { key: "name", label: "Client" },
+  { key: "rc_number", label: "RC Number" },
+  { key: "city", label: "City" },
+  { key: "phone", label: "Phone" },
+  { key: "email", label: "Email" },
+  { key: "created_at", label: "Added", kind: "date" },
+];
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -43,7 +55,7 @@ export default function ClientsPage() {
     queryFn: async () => {
       const { data, error: err } = await getSupabase()
         .from("hericilla_clients")
-        .select("id, name, rc_number, city, email, phone, deleted_at")
+        .select("id, name, rc_number, city, email, phone, created_at, deleted_at")
         .is("deleted_at", null)
         .order("name");
       if (err) throw err;
@@ -107,39 +119,43 @@ export default function ClientsPage() {
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
-      ) : (clients?.length ?? 0) === 0 ? (
-        <div className="mt-6">
-          <EmptyState
-            title="No clients yet"
-            teach="When you win your first contract, press “+ New client” and type the company name. Everything else hangs off that record."
-          />
-        </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {clients!.map((c) => {
-            const owed = revenueRows?.[c.name] ?? 0;
-            return (
-              <RowCard
-                key={c.id}
-                title={c.name}
-                subtitle={
-                  <>
-                    {c.rc_number && <span>RC {c.rc_number}</span>}
-                    {c.city && <span> · {c.city}</span>}
-                    {c.phone && <span> · {c.phone}</span>}
-                  </>
-                }
-                badge={owed > 0 ? <StatusBadge status="overdue" /> : undefined}
-                actions={
-                  owed > 0 ? (
-                    <span className="text-base font-bold text-danger-800">{money(owed)} owing</span>
-                  ) : undefined
-                }
-                onClick={() => router.push(`/clients/${c.id}`)}
+        <DataToolbar title="Clients" columns={CLIENT_COLUMNS} rows={clients ?? []} dateKey="created_at" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState
+                title="No clients yet"
+                teach="When you win your first contract, press “+ New client” and type the company name. Everything else hangs off that record."
               />
-            );
-          })}
-        </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((c) => {
+                  const owed = revenueRows?.[c.name] ?? 0;
+                  return (
+                    <RowCard
+                      key={c.id}
+                      title={c.name}
+                      subtitle={
+                        <>
+                          {c.rc_number && <span>RC {c.rc_number}</span>}
+                          {c.city && <span> · {c.city}</span>}
+                          {c.phone && <span> · {c.phone}</span>}
+                        </>
+                      }
+                      badge={owed > 0 ? <StatusBadge status="overdue" /> : undefined}
+                      actions={
+                        owed > 0 ? (
+                          <span className="text-base font-bold text-danger-800">{money(owed)} owing</span>
+                        ) : undefined
+                      }
+                      onClick={() => router.push(`/clients/${c.id}`)}
+                    />
+                  );
+                })}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       <Modal open={creating} title="New client" onClose={() => setCreating(false)} wide>

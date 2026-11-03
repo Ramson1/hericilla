@@ -18,6 +18,8 @@ import {
 import { getSupabase } from "@hericilla/supabase-clients";
 import { SERVICE_LABELS, SERVICE_TYPES, statusLabel, type ServiceType } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type Enq = {
   id: string;
@@ -41,6 +43,16 @@ type Enq = {
 };
 
 const ENQ_FLOW = ["new", "assigned", "in_progress", "responded", "closed"] as const;
+
+const ENQ_COLUMNS: ExportColumn<Enq>[] = [
+  { key: "ref_no", label: "Ref" },
+  { key: "name", label: "Name" },
+  { key: "company", label: "Company" },
+  { key: "email", label: "Email" },
+  { key: "service_type", label: "Service", format: (e) => (e.service_type ? SERVICE_LABELS[e.service_type] : statusLabel(e.enquiry_type)) },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "created_at", label: "Received", kind: "date" },
+];
 
 export default function InboxPage() {
   const qc = useQueryClient();
@@ -132,31 +144,35 @@ export default function InboxPage() {
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
-      ) : visible.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState
-            title="No enquiries waiting"
-            teach="When someone fills in the “Request a Quote” form on the website, it lands here with a reference number. Nothing to do right now — good news."
-          />
-        </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {visible.map((e) => (
-            <RowCard
-              key={e.id}
-              title={`${e.ref_no} — ${e.company || e.name}`}
-              subtitle={
-                <>
-                  <span>{statusLabel(e.enquiry_type)}</span>
-                  {e.service_type && <span> · {SERVICE_LABELS[e.service_type]}</span>}
-                  <span> · {new Date(e.created_at).toLocaleDateString()}</span>
-                </>
-              }
-              badge={<StatusBadge status={e.status} />}
-              onClick={() => setOpenId(e.id)}
-            />
-          ))}
-        </div>
+        <DataToolbar title="Enquiries" columns={ENQ_COLUMNS} rows={visible} dateKey="created_at" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState
+                title="No enquiries waiting"
+                teach="When someone fills in the “Request a Quote” form on the website, it lands here with a reference number. Nothing to do right now — good news."
+              />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((e) => (
+                  <RowCard
+                    key={e.id}
+                    title={`${e.ref_no} — ${e.company || e.name}`}
+                    subtitle={
+                      <>
+                        <span>{statusLabel(e.enquiry_type)}</span>
+                        {e.service_type && <span> · {SERVICE_LABELS[e.service_type]}</span>}
+                        <span> · {new Date(e.created_at).toLocaleDateString()}</span>
+                      </>
+                    }
+                    badge={<StatusBadge status={e.status} />}
+                    onClick={() => setOpenId(e.id)}
+                  />
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       <Modal open={!!selected} title={selected ? `Enquiry ${selected.ref_no}` : ""} onClose={() => setOpenId(null)} wide>

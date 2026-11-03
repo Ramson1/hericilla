@@ -22,6 +22,8 @@ import { getSupabase } from "@hericilla/supabase-clients";
 import { statusLabel, type PayrollRunStatus } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
 import { money } from "@/lib/data";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 /* ---------- row shapes ---------- */
 
@@ -364,6 +366,27 @@ export default function PayrollPage() {
   const lastPaid = (runs ?? []).find((r) => r.status === "paid");
   const noStructure = (employees ?? []).filter((e) => !(structures ?? []).some((s) => s.is_current && s.employee_id === e.id)).length;
 
+  const RUN_COLUMNS: ExportColumn<RunRow>[] = [
+    { key: "period_month", label: "Period", format: (r) => monthLabel(r.period_month) },
+    { key: "status", label: "Status", kind: "status" },
+    { key: "id", label: "Payslips", kind: "number", format: (r) => String(status.find((s) => s.run_id === r.id)?.payslip_count ?? 0) },
+    { key: "total_gross", label: "Gross", kind: "money" },
+    { key: "total_net", label: "Net", kind: "money" },
+    { key: "approved_at", label: "Approved", kind: "date" },
+    { key: "notes", label: "Notes" },
+  ];
+
+  const STRUCT_COLUMNS: ExportColumn<StructRow>[] = [
+    { key: "employee_name", label: "Employee" },
+    { key: "employee_role", label: "Role", format: (s) => statusLabel(s.employee_role ?? "") },
+    { key: "base_salary", label: "Base Salary", kind: "money" },
+    { key: "pay_cycle", label: "Cycle", kind: "status" },
+    { key: "allowances", label: "Allowances", format: (s) => (s.allowances ?? []).map((a) => `${a.name} ${money(a.amount)}`).join(", ") || "—" },
+    { key: "deductions", label: "Deductions", format: (s) => (s.deductions ?? []).map((d) => `${d.name} ${d.percent != null ? `${d.percent}%` : money(Number(d.amount ?? 0))}`).join(", ") || "—" },
+    { key: "effective_from", label: "Effective From", kind: "date" },
+    { key: "is_current", label: "Current?" },
+  ];
+
   return (
     <div>
       <PageHeader
@@ -401,16 +424,17 @@ export default function PayrollPage() {
       {tab === "runs" &&
         (isPending ? (
           <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
-        ) : (runs ?? []).length === 0 ? (
-          <div className="mt-6">
-            <EmptyState
-              title="No payroll run yet"
-              teach="Press “+ New payroll run” at the top. It drafts payslips from attendance and salary structures — nothing is paid until you approve and tick it."
-            />
-          </div>
         ) : (
-          <div className="mt-6 space-y-3">
-            {(runs ?? []).map((r) => {
+          <DataToolbar title="Payroll Runs" columns={RUN_COLUMNS} rows={runs ?? []} dateKey="period_month" className="mt-6">
+            {(shown) =>
+              shown.length === 0 ? (
+                <EmptyState
+                  title="No payroll run yet"
+                  teach="Press “+ New payroll run” at the top. It drafts payslips from attendance and salary structures — nothing is paid until you approve and tick it."
+                />
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {shown.map((r) => {
               const st = status.find((s) => s.run_id === r.id);
               return (
                 <RowCard
@@ -449,20 +473,23 @@ export default function PayrollPage() {
                 />
               );
             })}
-          </div>
+                </div>
+              )
+            }
+          </DataToolbar>
         ))}
 
       {tab === "structures" && (
-        (structures ?? []).length === 0 ? (
-          <div className="mt-6">
-            <EmptyState
-              title="No salary structures yet"
-              teach="Press “+ Salary structure” to set base pay, allowances and deductions. Payroll cannot run for anyone without one."
-            />
-          </div>
-        ) : (
-          <div className="mt-6 space-y-3">
-            {(structures ?? []).map((s) => (
+        <DataToolbar title="Salary Structures" columns={STRUCT_COLUMNS} rows={structures ?? []} dateKey="effective_from" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState
+                title="No salary structures yet"
+                teach="Press “+ Salary structure” to set base pay, allowances and deductions. Payroll cannot run for anyone without one."
+              />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((s) => (
               <RowCard
                 key={s.id}
                 title={`${s.employee_name ?? "Employee"} — ${money(s.base_salary)} base`}
@@ -480,8 +507,10 @@ export default function PayrollPage() {
                 actions={canStructure && s.is_current ? <BigButton size="md" variant="secondary" onClick={() => startEditStructure(s)}>Edit</BigButton> : undefined}
               />
             ))}
-          </div>
-        )
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       {/* New payroll run wizard */}

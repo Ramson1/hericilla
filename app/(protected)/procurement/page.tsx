@@ -20,6 +20,8 @@ import {
 import { getSupabase } from "@hericilla/supabase-clients";
 import { useAuth } from "@/lib/auth";
 import { money } from "@/lib/data";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type PR = {
   id: string;
@@ -41,6 +43,25 @@ type PO = {
   created_at: string;
   supplier_name: string | null;
 };
+
+const PR_COLUMNS: ExportColumn<PR>[] = [
+  { key: "ref_no", label: "PR Ref" },
+  { key: "client_name", label: "Client" },
+  { key: "description", label: "Description" },
+  { key: "estimated_cost", label: "Est. Cost", kind: "money" },
+  { key: "need_by_date", label: "Needed By", kind: "date" },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "created_at", label: "Created", kind: "date" },
+];
+
+const PO_COLUMNS: ExportColumn<PO>[] = [
+  { key: "ref_no", label: "PO Ref" },
+  { key: "supplier_name", label: "Supplier" },
+  { key: "total_amount", label: "Total", kind: "money" },
+  { key: "expected_delivery_date", label: "Expected Delivery", kind: "date" },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "created_at", label: "Created", kind: "date" },
+];
 
 export default function ProcurementPage() {
   const router = useRouter();
@@ -161,41 +182,49 @@ export default function ProcurementPage() {
       {tab === "requests" ? (
         prPending ? (
           <SkeletonList />
-        ) : (prs ?? []).length === 0 ? (
-          <div className="mt-6">
-            <EmptyState title="No purchase requests" teach="When a job needs materials or a service bought in, press “+ New purchase request”." />
-          </div>
         ) : (
-          <div className="mt-6 space-y-3">
-            {(prs ?? []).map((r) => (
-              <RowCard
-                key={r.id}
-                title={`${r.ref_no} — ${r.description || "Purchase request"}`}
-                subtitle={`${r.client_name ?? "Internal"} · ${r.estimated_cost ? money(r.estimated_cost) : "cost TBD"}`}
-                badge={<StatusBadge status={r.status} />}
-                onClick={() => router.push(`/procurement/pr/${r.id}`)}
-              />
-            ))}
-          </div>
+          <DataToolbar title="Purchase Requests" columns={PR_COLUMNS} rows={prs ?? []} dateKey="created_at" className="mt-6">
+            {(shown) =>
+              shown.length === 0 ? (
+                <EmptyState title="No purchase requests" teach="When a job needs materials or a service bought in, press “+ New purchase request”." />
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {shown.map((r) => (
+                    <RowCard
+                      key={r.id}
+                      title={`${r.ref_no} — ${r.description || "Purchase request"}`}
+                      subtitle={`${r.client_name ?? "Internal"} · ${r.estimated_cost ? money(r.estimated_cost) : "cost TBD"}`}
+                      badge={<StatusBadge status={r.status} />}
+                      onClick={() => router.push(`/procurement/pr/${r.id}`)}
+                    />
+                  ))}
+                </div>
+              )
+            }
+          </DataToolbar>
         )
       ) : poPending ? (
         <SkeletonList />
-      ) : (pos ?? []).length === 0 ? (
-        <div className="mt-6">
-          <EmptyState title="No purchase orders yet" teach="Orders appear here after an approved request is turned into a PO." />
-        </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {(pos ?? []).map((o) => (
-            <RowCard
-              key={o.id}
-              title={`${o.ref_no} — ${o.supplier_name ?? "Supplier"}`}
-              subtitle={`${money(o.total_amount)}${o.expected_delivery_date ? ` · due ${new Date(o.expected_delivery_date).toLocaleDateString()}` : ""}`}
-              badge={<StatusBadge status={o.status} />}
-              onClick={() => router.push(`/procurement/po/${o.id}`)}
-            />
-          ))}
-        </div>
+        <DataToolbar title="Purchase Orders" columns={PO_COLUMNS} rows={pos ?? []} dateKey="created_at" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState title="No purchase orders yet" teach="Orders appear here after an approved request is turned into a PO." />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((o) => (
+                  <RowCard
+                    key={o.id}
+                    title={`${o.ref_no} — ${o.supplier_name ?? "Supplier"}`}
+                    subtitle={`${money(o.total_amount)}${o.expected_delivery_date ? ` · due ${new Date(o.expected_delivery_date).toLocaleDateString()}` : ""}`}
+                    badge={<StatusBadge status={o.status} />}
+                    onClick={() => router.push(`/procurement/po/${o.id}`)}
+                  />
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       <Modal open={creating} title="New purchase request" onClose={() => setCreating(false)} wide>

@@ -16,7 +16,8 @@ import {
 } from "@hericilla/ui";
 import { getSupabase } from "@hericilla/supabase-clients";
 import { useAuth } from "@/lib/auth";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { exportCsv, exportDocx, exportPdf, type ExportColumn } from "@/lib/export";
+import { ChevronLeft, ChevronRight, FileText, FileSpreadsheet, FileType2 } from "lucide-react";
 
 const MANAGE_ROLES = ["super_admin", "admin", "hr_officer", "auditor"];
 const PAGE_SIZE = 50;
@@ -110,6 +111,22 @@ export default function AuditPage() {
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
 
+  const AUDIT_COLUMNS: ExportColumn<AuditRow>[] = [
+    { key: "at", label: "Time (WAT)", format: (r) => formatTime(r.at) },
+    { key: "actor_id", label: "Actor", format: (r) => actorName(r.actor_id) },
+    { key: "action", label: "Action", kind: "status" },
+    { key: "entity", label: "Entity", format: (r) => r.entity.replace("hericilla_", "") },
+    { key: "entity_id", label: "Record ID" },
+    { key: "before_data", label: "Before", format: (r) => (r.before_data ? JSON.stringify(r.before_data) : "") },
+    { key: "after_data", label: "After", format: (r) => (r.after_data ? JSON.stringify(r.after_data) : "") },
+  ];
+
+  const exportRows = () => {
+    const rows = data?.rows ?? [];
+    const filename = `audit-log-${new Date().toISOString().slice(0, 10)}`;
+    return { rows, filename };
+  };
+
   if (!canView) {
     return (
       <div>
@@ -170,7 +187,20 @@ export default function AuditPage() {
         </div>
       ) : (
         <>
-          <p className="mt-6 text-sm text-ink-soft">{data!.total} entries · page {page + 1} of {totalPages || 1}</p>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-ink-soft">{data!.total} entries · page {page + 1} of {totalPages || 1}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <BigButton variant="secondary" size="md" icon={<FileText className="h-5 w-5" />} onClick={() => { const { rows, filename } = exportRows(); exportPdf("Audit Log", AUDIT_COLUMNS, rows, filename); }}>
+                PDF
+              </BigButton>
+              <BigButton variant="secondary" size="md" icon={<FileSpreadsheet className="h-5 w-5" />} onClick={() => { const { rows, filename } = exportRows(); exportCsv("Audit Log", AUDIT_COLUMNS, rows, filename); }}>
+                CSV
+              </BigButton>
+              <BigButton variant="secondary" size="md" icon={<FileType2 className="h-5 w-5" />} onClick={() => { const { rows, filename } = exportRows(); exportDocx("Audit Log", AUDIT_COLUMNS, rows, filename); }}>
+                DOCX
+              </BigButton>
+            </div>
+          </div>
           <div className="mt-3 space-y-3">
             {data!.rows.map((r) => (
               <RowCard

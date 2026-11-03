@@ -20,6 +20,8 @@ import {
 import { getSupabase } from "@hericilla/supabase-clients";
 import { SERVICE_TYPES, SERVICE_LABELS, PRIORITIES, type ServiceType, type Priority } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type SrRow = {
   id: string;
@@ -39,6 +41,17 @@ const FILTERS = [
   { key: "stopped", label: "Rejected / cancelled", match: (s: SrRow) => ["rejected", "cancelled"].includes(s.status) },
   { key: "all", label: "Everything", match: () => true },
 ] as const;
+
+const JOB_COLUMNS: ExportColumn<SrRow>[] = [
+  { key: "ref_no", label: "Ref" },
+  { key: "title", label: "Title" },
+  { key: "client_name", label: "Client" },
+  { key: "service_type", label: "Service", format: (r) => SERVICE_LABELS[r.service_type] ?? "" },
+  { key: "priority", label: "Priority", kind: "status" },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "deadline", label: "Deadline", kind: "date" },
+  { key: "created_at", label: "Created", kind: "date" },
+];
 
 export default function JobsPage() {
   const router = useRouter();
@@ -176,36 +189,40 @@ export default function JobsPage() {
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
-      ) : visible.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState
-            title="Nothing here yet"
-            teach="When a client asks us for something — a truck, a procurement, a full office move — record it with “+ New service request”. Every job starts there."
-          />
-        </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {visible.map((r) => (
-            <RowCard
-              key={r.id}
-              title={`${r.ref_no} — ${r.title}`}
-              subtitle={
-                <>
-                  {r.client_name && <span>{r.client_name}</span>}
-                  <span> · {SERVICE_LABELS[r.service_type]}</span>
-                  {r.deadline && <span> · due {new Date(r.deadline).toLocaleDateString()}</span>}
-                </>
-              }
-              badge={
-                <span className="flex gap-2">
-                  {(r.priority === "urgent" || r.priority === "high") && <StatusBadge status={r.priority} />}
-                  <StatusBadge status={r.status} />
-                </span>
-              }
-              onClick={() => router.push(`/jobs/${r.id}`)}
-            />
-          ))}
-        </div>
+        <DataToolbar title="Jobs" columns={JOB_COLUMNS} rows={visible} dateKey="created_at" className="mt-6">
+          {(shown) =>
+            shown.length === 0 ? (
+              <EmptyState
+                title="Nothing here yet"
+                teach="When a client asks us for something — a truck, a procurement, a full office move — record it with “+ New service request”. Every job starts there."
+              />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {shown.map((r) => (
+                  <RowCard
+                    key={r.id}
+                    title={`${r.ref_no} — ${r.title}`}
+                    subtitle={
+                      <>
+                        {r.client_name && <span>{r.client_name}</span>}
+                        <span> · {SERVICE_LABELS[r.service_type]}</span>
+                        {r.deadline && <span> · due {new Date(r.deadline).toLocaleDateString()}</span>}
+                      </>
+                    }
+                    badge={
+                      <span className="flex gap-2">
+                        {(r.priority === "urgent" || r.priority === "high") && <StatusBadge status={r.priority} />}
+                        <StatusBadge status={r.status} />
+                      </span>
+                    }
+                    onClick={() => router.push(`/jobs/${r.id}`)}
+                  />
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       <Modal open={creating} title="New service request" onClose={() => setCreating(false)} wide>

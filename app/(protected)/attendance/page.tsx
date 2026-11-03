@@ -20,6 +20,8 @@ import { getSupabase } from "@hericilla/supabase-clients";
 import { statusLabel } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
 import { todayWat } from "@/lib/data";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type Daily = {
   employee_id: string;
@@ -235,6 +237,25 @@ export default function AttendancePage() {
     return d.toISOString().slice(0, 10);
   });
 
+  const hhmm = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—");
+
+  const DAILY_COLUMNS: ExportColumn<Daily>[] = [
+    { key: "employee_id", label: "Staff", format: (d) => nameOf(d.employee_id) },
+    { key: "work_date", label: "Date", kind: "date" },
+    { key: "first_in", label: "Clock In", format: (d) => hhmm(d.first_in) },
+    { key: "last_out", label: "Clock Out", format: (d) => hhmm(d.last_out) },
+    { key: "gross_hours", label: "Hours", kind: "number" },
+    { key: "day_status", label: "Status", kind: "status" },
+    { key: "is_late", label: "Late?" },
+  ];
+
+  const STALE_COLUMNS: ExportColumn<Daily>[] = [
+    { key: "employee_id", label: "Staff", format: (d) => nameOf(d.employee_id) },
+    { key: "work_date", label: "Date", kind: "date" },
+    { key: "first_in", label: "Clock In", format: (d) => hhmm(d.first_in) },
+    { key: "day_status", label: "Status", kind: "status" },
+  ];
+
   return (
     <div>
       <PageHeader
@@ -272,34 +293,42 @@ export default function AttendancePage() {
           <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
         ) : (
           <div className="mt-6 space-y-6">
-            {(daily ?? []).length === 0 ? (
-              <EmptyState title="Nobody has clocked in today yet" teach="When staff open their portal and press Clock in, they appear here with their times." />
-            ) : (
-              <div className="space-y-3">
-                {(daily ?? []).map((d) => (
-                  <RowCard
-                    key={d.employee_id}
-                    title={nameOf(d.employee_id)}
-                    subtitle={`${d.first_in ? "In " + new Date(d.first_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "No clock-in"}${d.last_out ? ` · Out ${new Date(d.last_out).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}${d.gross_hours ? ` · ${Number(d.gross_hours).toFixed(1)} h` : ""}`}
-                    badge={<StatusBadge status={d.day_status} />}
-                    actions={d.is_late ? <span className="text-base font-bold text-warning-800 self-center">Late</span> : undefined}
-                  />
-                ))}
-              </div>
-            )}
+            <DataToolbar title="Today's Attendance" columns={DAILY_COLUMNS} rows={daily ?? []} dateKey="work_date">
+              {(shown) =>
+                shown.length === 0 ? (
+                  <EmptyState title="Nobody has clocked in today yet" teach="When staff open their portal and press Clock in, they appear here with their times." />
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {shown.map((d) => (
+                      <RowCard
+                        key={d.employee_id}
+                        title={nameOf(d.employee_id)}
+                        subtitle={`${d.first_in ? "In " + new Date(d.first_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "No clock-in"}${d.last_out ? ` · Out ${new Date(d.last_out).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}${d.gross_hours ? ` · ${Number(d.gross_hours).toFixed(1)} h` : ""}`}
+                        badge={<StatusBadge status={d.day_status} />}
+                        actions={d.is_late ? <span className="text-base font-bold text-warning-800 self-center">Late</span> : undefined}
+                      />
+                    ))}
+                  </div>
+                )
+              }
+            </DataToolbar>
             {(stale ?? []).length > 0 && (
-              <Card>
-                <h2 className="text-lg font-bold text-danger-800">Still on duty from earlier days</h2>
-                <p className="text-base text-ink-soft mt-1">These people clocked in but never clocked out. Ask them to submit a correction, or record the event for them.</p>
-                <div className="mt-3 space-y-2">
-                  {(stale ?? []).map((s) => (
-                    <div key={s.employee_id + s.work_date} className="flex justify-between text-base py-1 border-b border-[var(--color-line)] last:border-0">
-                      <span>{nameOf(s.employee_id)}</span>
-                      <span className="text-ink-soft">since {new Date(s.work_date).toLocaleDateString()}</span>
+              <DataToolbar title="Attendance Exceptions" columns={STALE_COLUMNS} rows={stale ?? []} dateKey="work_date">
+                {(shown) => (
+                  <Card className="mt-4">
+                    <h2 className="text-lg font-bold text-danger-800">Still on duty from earlier days</h2>
+                    <p className="text-base text-ink-soft mt-1">These people clocked in but never clocked out. Ask them to submit a correction, or record the event for them.</p>
+                    <div className="mt-3 space-y-2">
+                      {shown.map((s) => (
+                        <div key={s.employee_id + s.work_date} className="flex justify-between text-base py-1 border-b border-[var(--color-line)] last:border-0">
+                          <span>{nameOf(s.employee_id)}</span>
+                          <span className="text-ink-soft">since {new Date(s.work_date).toLocaleDateString()}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Card>
+                  </Card>
+                )}
+              </DataToolbar>
             )}
           </div>
         )

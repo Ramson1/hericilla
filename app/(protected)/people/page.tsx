@@ -18,9 +18,12 @@ import {
 import { getSupabase } from "@hericilla/supabase-clients";
 import { APP_ROLES, type Profile, statusLabel } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type CertRow = { id: string; profile_id: string; name: string; issued_by: string | null; expiry_date: string | null; status: string };
 type Department = { id: string; name: string };
+type PersonRow = Profile & { created_at: string };
 
 export default function PeoplePage() {
   const qc = useQueryClient();
@@ -38,7 +41,7 @@ export default function PeoplePage() {
     queryKey: ["profiles-register"],
     queryFn: async () => {
       const { data } = await getSupabase().from("hericilla_profiles").select("*").order("full_name");
-      return (data as Profile[]) ?? [];
+      return (data as PersonRow[]) ?? [];
     },
   });
 
@@ -61,6 +64,16 @@ export default function PeoplePage() {
 
   const deptName = (id: string | null | undefined) => (departments ?? []).find((d) => d.id === id)?.name ?? "No department";
   const shown = (people ?? []).filter((p) => !deptFilter || p.department_id === deptFilter);
+
+  const PEOPLE_COLUMNS: ExportColumn<PersonRow>[] = [
+    { key: "full_name", label: "Name" },
+    { key: "email", label: "Email" },
+    { key: "role", label: "Role", format: (p) => statusLabel(p.role) },
+    { key: "department_id", label: "Department", format: (p) => deptName(p.department_id) },
+    { key: "employee_no", label: "Staff No" },
+    { key: "status", label: "Status", kind: "status" },
+    { key: "created_at", label: "Added", kind: "date" },
+  ];
 
   function openDetail(p: Profile) {
     setDetail(p);
@@ -132,23 +145,27 @@ export default function PeoplePage() {
 
       {isPending ? (
         <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
-      ) : shown.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState title="No staff listed yet" teach="Accounts are created when someone is invited — then their department and role show up here." />
-        </div>
       ) : (
-        <div className="mt-6 space-y-3">
-          {shown.map((p) => (
-            <RowCard
-              key={p.id}
-              title={p.full_name}
-              subtitle={`${p.email}${p.employee_no ? ` · ${p.employee_no}` : ""} · ${deptName(p.department_id)}`}
-              badge={<StatusBadge status={p.status} />}
-              actions={<span className="text-base text-brand-800 font-semibold self-center">{statusLabel(p.role)}</span>}
-              onClick={() => openDetail(p)}
-            />
-          ))}
-        </div>
+        <DataToolbar title="Staff Register" columns={PEOPLE_COLUMNS} rows={shown} dateKey="created_at" className="mt-6">
+          {(listed) =>
+            listed.length === 0 ? (
+              <EmptyState title="No staff listed yet" teach="Accounts are created when someone is invited — then their department and role show up here." />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {listed.map((p) => (
+                  <RowCard
+                    key={p.id}
+                    title={p.full_name}
+                    subtitle={`${p.email}${p.employee_no ? ` · ${p.employee_no}` : ""} · ${deptName(p.department_id)}`}
+                    badge={<StatusBadge status={p.status} />}
+                    actions={<span className="text-base text-brand-800 font-semibold self-center">{statusLabel(p.role)}</span>}
+                    onClick={() => openDetail(p)}
+                  />
+                ))}
+              </div>
+            )
+          }
+        </DataToolbar>
       )}
 
       <Modal open={!!detail} title={detail?.full_name ?? ""} onClose={() => setDetail(null)} wide>

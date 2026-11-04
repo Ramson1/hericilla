@@ -120,7 +120,7 @@ export default function ClientsPage() {
           ))}
         </div>
       ) : (
-        <DataToolbar title="Clients" columns={CLIENT_COLUMNS} rows={clients ?? []} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Clients" columns={CLIENT_COLUMNS} rows={clients ?? []} dateKey="created_at" searchKeys={["name", "rc_number", "city", "email", "phone"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState

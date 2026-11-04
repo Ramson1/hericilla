@@ -116,7 +116,7 @@ function PodsPanel() {
     queryFn: async () => {
       const { data } = await getSupabase()
         .from("hericilla_proof_of_delivery")
-        .select("*, transport_jobs:hericilla_transport_jobs(ref_no, status), driver:hericilla_profiles!proof_of_delivery_submitted_by_fkey(full_name)")
+        .select("*, transport_jobs:hericilla_transport_jobs(ref_no, status), driver:hericilla_profiles!hericilla_proof_of_delivery_submitted_by_fkey(full_name)")
         .order("delivered_at", { ascending: false })
         .limit(150);
       return ((data as Record<string, unknown>[]) ?? []).map((raw) => {
@@ -156,7 +156,7 @@ function PodsPanel() {
   if (isPending) return <Skeleton className="h-40" />;
 
   return (
-    <DataToolbar title="Proof of Delivery" columns={POD_COLUMNS} rows={pods ?? []} dateKey="delivered_at">
+    <DataToolbar title="Proof of Delivery" columns={POD_COLUMNS} rows={pods ?? []} dateKey="delivered_at" searchKeys={["job_ref", "recipient_name", "driver_name", "outcome", "notes"]}>
       {(shown) => {
         const pendingList = shown.filter((p) => !p.verified_at);
         const doneList = shown.filter((p) => p.verified_at);
@@ -286,7 +286,7 @@ function ExpensesPanel() {
     queryFn: async () => {
       let q = getSupabase()
         .from("hericilla_trip_expenses")
-        .select("*, transport_jobs:hericilla_transport_jobs(ref_no), driver:hericilla_profiles!trip_expenses_submitted_by_fkey(full_name)")
+        .select("*, transport_jobs:hericilla_transport_jobs(ref_no), driver:hericilla_profiles!hericilla_trip_expenses_submitted_by_fkey(full_name)")
         .order("occurred_at", { ascending: false })
         .limit(200);
       if (filter === "pending") q = q.eq("status", "pending");
@@ -325,7 +325,7 @@ function ExpensesPanel() {
   if (isPending) return <Skeleton className="h-40" />;
 
   return (
-    <DataToolbar title="Trip Expenses" columns={DELIVERY_EXPENSE_COLUMNS} rows={expenses ?? []} dateKey="occurred_at">
+    <DataToolbar title="Trip Expenses" columns={DELIVERY_EXPENSE_COLUMNS} rows={expenses ?? []} dateKey="occurred_at" searchKeys={["job_ref", "driver_name", "expense_type", "status"]}>
       {(shown) => (
         <div className="space-y-4">
           {error ? <p className="rounded-xl bg-danger-100 p-4 font-semibold text-danger-800">{error}</p> : null}

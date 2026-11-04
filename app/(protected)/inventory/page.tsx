@@ -31,6 +31,7 @@ type StockRow = {
   location: string | null;
   unit_value: number;
   min_stock_level: number;
+  reorder_qty: number;
   quantity_on_hand: number;
   stock_value: number;
   needs_reorder: boolean;
@@ -42,6 +43,8 @@ type MovementRow = {
   quantity: number;
   note: string | null;
   occurred_at: string;
+  /** Destination of a "transferred" movement — recorded by the form, so it has to be readable. */
+  to_location?: string | null;
   item_name?: string;
 };
 type AlertRow = { item_id: string; on_hand: number; min_level: number; alerted_at: string; item_name?: string };
@@ -63,6 +66,7 @@ const MOVEMENT_COLUMNS: ExportColumn<MovementRow>[] = [
   { key: "item_name", label: "Item" },
   { key: "movement_type", label: "Movement", kind: "status" },
   { key: "quantity", label: "Quantity", kind: "number" },
+  { key: "to_location", label: "Moved to" },
   { key: "note", label: "Note" },
   { key: "occurred_at", label: "When", kind: "date" },
 ];
@@ -85,6 +89,8 @@ export default function InventoryPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [newItem, setNewItem] = useState({ sku: "", name: "", uom: "pcs", min_stock_level: "0", reorder_qty: "0", unit_value: "0", location: "" });
+  const [editItemId, setEditItemId] = useState<string | null>(null);
+  const [retiring, setRetiring] = useState<StockRow | null>(null);
   const [move, setMove] = useState({ item_id: "", movement_type: "received", quantity: "1", note: "", to_location: "" });
 
   const { data: stock, isPending } = useQuery({
@@ -126,14 +132,36 @@ export default function InventoryPage() {
   const totalValue = (stock ?? []).reduce((s, r) => s + Number(r.stock_value), 0);
   const lowCount = (stock ?? []).filter((r) => r.needs_reorder).length;
 
-  async function createItem() {
+  function startCreateItem() {
+    setNewItem({ sku: "", name: "", uom: "pcs", min_stock_level: "0", reorder_qty: "0", unit_value: "0", location: "" });
+    setEditItemId(null);
+    setError(null);
+    setItemOpen(true);
+  }
+
+  function startEditItem(r: StockRow) {
+    setNewItem({
+      sku: r.sku,
+      name: r.name,
+      uom: r.uom,
+      min_stock_level: String(Number(r.min_stock_level)),
+      reorder_qty: String(Number(r.reorder_qty)),
+      unit_value: String(Number(r.unit_value)),
+      location: r.location ?? "",
+    });
+    setEditItemId(r.id);
+    setError(null);
+    setItemOpen(true);
+  }
+
+  async function saveItem() {
     if (!newItem.sku.trim() || !newItem.name.trim()) {
       setError("An item needs at least a name and a code (SKU).");
       return;
     }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().from("hericilla_inventory_items").insert({
+    const payload = {
       sku: newItem.sku.trim().toUpperCase(),
       name: newItem.name.trim(),
       uom: newItem.uom,
@@ -141,15 +169,42 @@ export default function InventoryPage() {
       reorder_qty: Number(newItem.reorder_qty) || 0,
       unit_value: Number(newItem.unit_value) || 0,
       location: newItem.location.trim() || null,
-    });
+    };
+    const { error: err } = editItemId
+      ? await getSupabase().from("hericilla_inventory_items").update(payload).eq("id", editItemId)
+      : await getSupabase().from("hericilla_inventory_items").insert(payload);
     setBusy(false);
     if (err) {
-      setError(err.message.includes("duplicate") ? "That code (SKU) is already taken." : "Could not save: " + err.message);
+      if (err.message.includes("duplicate")) setError("That code (SKU) is already taken.");
+      else if (editItemId && err.message.includes("changed row")) setError("This item was retired by someone else — reload the list.");
+      else setError("Could not save: " + err.message);
       return;
     }
     setItemOpen(false);
-    setNewItem({ sku: "", name: "", uom: "pcs", min_stock_level: "0", reorder_qty: "0", unit_value: "0", location: "" });
+    setEditItemId(null);
     void qc.invalidateQueries({ queryKey: ["stock-levels"] });
+    void qc.invalidateQueries({ queryKey: ["reorder-alerts"] });
+  }
+
+  // Retire, never erase. The stock ledger points at items with ON DELETE RESTRICT and RLS does not
+  // allow deleting an item at all, so retired rows keep their movements and valuation history;
+  // the rebuilt stock views (migration 0030) simply stop listing them.
+  async function confirmRetire() {
+    if (!retiring) return;
+    setBusy(true);
+    const { error: err } = await getSupabase()
+      .from("hericilla_inventory_items")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", retiring.id);
+    setBusy(false);
+    if (err) {
+      setError("Could not retire this item: " + err.message);
+      setRetiring(null);
+      return;
+    }
+    setRetiring(null);
+    void qc.invalidateQueries({ queryKey: ["stock-levels"] });
+    void qc.invalidateQueries({ queryKey: ["reorder-alerts"] });
   }
 
   async function recordMovement() {
@@ -196,7 +251,7 @@ export default function InventoryPage() {
         actions={
           <div className="flex gap-3">
             <BigButton variant="secondary" onClick={() => setMoveOpen(true)}>+ Record movement</BigButton>
-            <BigButton onClick={() => setItemOpen(true)}>+ New item</BigButton>
+            <BigButton onClick={startCreateItem}>+ New item</BigButton>
           </div>
         }
       />
@@ -205,6 +260,7 @@ export default function InventoryPage() {
           "Add each material once — then every movement picks it from the list.",
           "Received and returned go up; issued, transfers and losses go down.",
           "Items under their minimum show a red “Low” badge — order more in Procurement.",
+          "“Retire” takes an item off the list but keeps every movement recorded against it.",
         ]}
       />
 
@@ -230,7 +286,7 @@ export default function InventoryPage() {
         (isPending ? (
           <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
         ) : (
-          <DataToolbar title="Stock Levels" columns={STOCK_COLUMNS} rows={stock ?? []} className="mt-6">
+          <DataToolbar title="Stock Levels" columns={STOCK_COLUMNS} rows={stock ?? []} searchKeys={["name", "sku", "location", "uom"]} className="mt-6">
             {(shown) =>
               shown.length === 0 ? (
                 <EmptyState title="The store list is empty" teach="Press “+ New item” to add the first material you keep count of." />
@@ -243,6 +299,16 @@ export default function InventoryPage() {
                       subtitle={`${Number(r.quantity_on_hand)} ${r.uom} on hand${r.location ? ` · ${r.location}` : ""} · worth ${money(r.stock_value)}`}
                       badge={r.needs_reorder ? <StatusBadge status="low" /> : undefined}
                       onClick={() => { setMove({ ...move, item_id: r.id }); setMoveOpen(true); }}
+                      actions={
+                        <span className="flex gap-2">
+                          <BigButton size="md" variant="secondary" onClick={() => startEditItem(r)}>
+                            Edit
+                          </BigButton>
+                          <BigButton size="md" variant="danger" onClick={() => { setRetiring(r); setError(null); }}>
+                            Retire
+                          </BigButton>
+                        </span>
+                      }
                     />
                   ))}
                 </div>
@@ -252,7 +318,7 @@ export default function InventoryPage() {
         ))}
 
       {tab === "movements" && (
-        <DataToolbar title="Stock Movements" columns={MOVEMENT_COLUMNS} rows={movements ?? []} dateKey="occurred_at" className="mt-6">
+        <DataToolbar title="Stock Movements" columns={MOVEMENT_COLUMNS} rows={movements ?? []} dateKey="occurred_at" searchKeys={["item_name", "note", "movement_type"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState title="No movements yet" teach="Every time something arrives or leaves the store, press “+ Record movement”." />
@@ -262,7 +328,7 @@ export default function InventoryPage() {
                   <RowCard
                     key={m.id}
                     title={`${m.item_name} — ${statusLabel(m.movement_type)} ${ADD_TYPES.has(m.movement_type) ? "+" : "−"}${Number(m.quantity)}`}
-                    subtitle={`${new Date(m.occurred_at).toLocaleString()}${m.note ? ` · ${m.note}` : ""}`}
+                    subtitle={`${new Date(m.occurred_at).toLocaleString()}${m.to_location ? ` · to ${m.to_location}` : ""}${m.note ? ` · ${m.note}` : ""}`}
                     badge={<StatusBadge status={m.movement_type} />}
                   />
                 ))}
@@ -282,7 +348,7 @@ export default function InventoryPage() {
               </BigButton>
             </div>
           </Card>
-          <DataToolbar title="Low-stock Alerts" columns={ALERT_COLUMNS} rows={alerts ?? []} dateKey="alerted_at" className="mt-6">
+          <DataToolbar title="Low-stock Alerts" columns={ALERT_COLUMNS} rows={alerts ?? []} dateKey="alerted_at" searchKeys={["item_name"]} className="mt-6">
             {(shown) =>
               shown.length === 0 ? (
                 <EmptyState title="Nothing is running low" teach="When an item drops to its minimum level it will appear here with a red badge." />
@@ -303,7 +369,7 @@ export default function InventoryPage() {
         </div>
       )}
 
-      <Modal open={itemOpen} title="New stock item" onClose={() => { setItemOpen(false); setError(null); }}>
+      <Modal open={itemOpen} title={editItemId ? "Edit stock item" : "New stock item"} onClose={() => { setItemOpen(false); setEditItemId(null); setError(null); }}>
         <div className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
             <BigInput label="Name" required value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} />
@@ -321,7 +387,25 @@ export default function InventoryPage() {
           {error && <p className="text-base text-danger-800">{error}</p>}
           <div className="flex justify-end gap-3">
             <BigButton variant="secondary" onClick={() => setItemOpen(false)}>Cancel</BigButton>
-            <BigButton variant="success" disabled={busy} onClick={() => void createItem()}>{busy ? "Saving…" : "Save item"}</BigButton>
+            <BigButton variant="success" disabled={busy} onClick={() => void saveItem()}>{busy ? "Saving…" : "Save item"}</BigButton>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={!!retiring} title={`Retire ${retiring?.name ?? ""}?`} onClose={() => setRetiring(null)}>
+        <div className="space-y-5">
+          <p className="text-base">
+            The item disappears from the stock list and the movement picker, and its low-stock alert
+            is cleared the next time shortages are checked. Every movement already recorded against{" "}
+            <strong>{retiring?.sku}</strong> is kept — that history is how the valuation figures stay
+            honest, so retired items are never erased.
+          </p>
+          {error && <p className="text-base text-danger-800">{error}</p>}
+          <div className="flex justify-end gap-3">
+            <BigButton variant="secondary" onClick={() => setRetiring(null)}>Keep item</BigButton>
+            <BigButton variant="danger" disabled={busy} onClick={() => void confirmRetire()}>
+              {busy ? "Retiring…" : "Retire item"}
+            </BigButton>
           </div>
         </div>
       </Modal>

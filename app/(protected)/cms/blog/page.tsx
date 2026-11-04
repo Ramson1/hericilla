@@ -19,6 +19,8 @@ import {
 import { getSupabase } from "@hericilla/supabase-clients";
 import { statusLabel } from "@hericilla/types";
 import { useAuth } from "@/lib/auth";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type Post = {
   id: string;
@@ -33,6 +35,14 @@ type Post = {
   published_at: string | null;
   created_at: string;
 };
+
+const BLOG_COLUMNS: ExportColumn<Post>[] = [
+  { key: "title", label: "Title" },
+  { key: "category", label: "Category", format: (p) => statusLabel(p.category) },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "slug", label: "Web address" },
+  { key: "published_at", label: "Published", kind: "date" },
+];
 
 function slugify(s: string) {
   return s
@@ -143,11 +153,14 @@ export default function CmsBlogPage() {
               <Skeleton key={i} className="h-20" />
             ))}
           </div>
-        ) : rows!.length === 0 ? (
-          <EmptyState title="No articles yet" teach="Press “+ New article” to write your first story. Share a completed job, a safety tip or company news." />
         ) : (
-          <div className="space-y-3">
-            {rows!.map((p) => (
+          <DataToolbar title="Blog & news" columns={BLOG_COLUMNS} rows={rows!} dateKey="created_at" searchKeys={["title", "slug", "excerpt"]}>
+            {(shown) =>
+              shown.length === 0 ? (
+                <EmptyState title="No articles yet" teach="Press “+ New article” to write your first story. Share a completed job, a safety tip or company news." />
+              ) : (
+                <div className="space-y-3">
+                  {shown.map((p) => (
               <RowCard
                 key={p.id}
                 title={p.title}
@@ -164,8 +177,11 @@ export default function CmsBlogPage() {
                   </span>
                 }
               />
-            ))}
-          </div>
+                  ))}
+                </div>
+              )
+            }
+          </DataToolbar>
         )}
       </div>
 

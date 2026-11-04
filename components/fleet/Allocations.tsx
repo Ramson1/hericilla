@@ -53,7 +53,7 @@ export function AllocationsPanel({
     queryFn: async () => {
       const { data } = await getSupabase()
         .from("hericilla_vehicle_allocations")
-        .select("*, vehicles:hericilla_vehicles(reg_no), driver:hericilla_profiles!vehicle_allocations_driver_id_fkey(full_name), work_orders:hericilla_work_orders(wo_number), sites:hericilla_sites(name)")
+        .select("*, vehicles:hericilla_vehicles(reg_no), driver:hericilla_profiles!hericilla_vehicle_allocations_driver_id_fkey(full_name), work_orders:hericilla_work_orders(wo_number), sites:hericilla_sites(name)")
         .order("valid_from", { ascending: false })
         .limit(200);
       return ((data as AllocationRow[]) ?? []).map((r) => {

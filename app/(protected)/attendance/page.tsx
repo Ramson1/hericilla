@@ -132,7 +132,7 @@ export default function AttendancePage() {
       end.setDate(end.getDate() + 6);
       const { data } = await getSupabase()
         .from("hericilla_shift_assignments")
-        .select("*, shift:hericilla_shifts!shift_assignments_shift_id_fkey(name)")
+        .select("*, shift:hericilla_shifts!hericilla_shift_assignments_shift_id_fkey(name)")
         .gte("work_date", weekStart)
         .lte("work_date", end.toISOString().slice(0, 10))
         .order("work_date");

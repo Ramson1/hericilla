@@ -75,6 +75,7 @@ export default function VehiclesPage() {
         .select("id, full_name")
         .eq("role", "driver")
         .eq("status", "active")
+        .eq("is_system", false)
         .order("full_name");
       return (data as Mini[]) ?? [];
     },
@@ -86,7 +87,7 @@ export default function VehiclesPage() {
       const { data } = await getSupabase()
         .from("hericilla_work_orders")
         .select("id, wo_number")
-        .not("status", "in", "('closed')")
+        .neq("status", "closed")
         .order("created_at", { ascending: false })
         .limit(100);
       return (data as WoMini[]) ?? [];
@@ -161,7 +162,7 @@ export default function VehiclesPage() {
 
       {tab === "board" && <BoardPanel board={board ?? []} />}
       {tab === "register" && (
-        <DataToolbar title="Vehicle Register" columns={VEHICLE_COLUMNS} rows={all} className="mt-6">
+        <DataToolbar title="Vehicle Register" columns={VEHICLE_COLUMNS} rows={all} searchKeys={["reg_no", "make", "model", "vehicle_type", "status", "capacity"]} className="mt-6">
           {(shown) => <RegisterPanel vehicles={shown} />}
         </DataToolbar>
       )}

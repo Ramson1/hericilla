@@ -183,7 +183,7 @@ export default function ProcurementPage() {
         prPending ? (
           <SkeletonList />
         ) : (
-          <DataToolbar title="Purchase Requests" columns={PR_COLUMNS} rows={prs ?? []} dateKey="created_at" className="mt-6">
+          <DataToolbar title="Purchase Requests" columns={PR_COLUMNS} rows={prs ?? []} dateKey="created_at" searchKeys={["ref_no", "description", "client_name", "status"]} className="mt-6">
             {(shown) =>
               shown.length === 0 ? (
                 <EmptyState title="No purchase requests" teach="When a job needs materials or a service bought in, press “+ New purchase request”." />
@@ -206,7 +206,7 @@ export default function ProcurementPage() {
       ) : poPending ? (
         <SkeletonList />
       ) : (
-        <DataToolbar title="Purchase Orders" columns={PO_COLUMNS} rows={pos ?? []} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Purchase Orders" columns={PO_COLUMNS} rows={pos ?? []} dateKey="created_at" searchKeys={["ref_no", "supplier_name", "status"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState title="No purchase orders yet" teach="Orders appear here after an approved request is turned into a PO." />

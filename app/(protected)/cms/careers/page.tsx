@@ -18,6 +18,8 @@ import {
 } from "@hericilla/ui";
 import { getSupabase } from "@hericilla/supabase-clients";
 import { statusLabel } from "@hericilla/types";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type Career = {
   id: string;
@@ -44,6 +46,14 @@ type Application = {
 
 const BLANK = { title: "", department: "", location: "Port Harcourt", description: "", requirements: "", closing_date: "", status: "open" };
 const APP_STATUSES = ["new", "reviewed", "shortlisted", "rejected", "hired"] as const;
+
+const CAREER_COLUMNS: ExportColumn<Career>[] = [
+  { key: "title", label: "Role" },
+  { key: "department", label: "Department" },
+  { key: "location", label: "Location" },
+  { key: "status", label: "Status", kind: "status" },
+  { key: "closing_date", label: "Closing date", kind: "date" },
+];
 
 export default function CmsCareersPage() {
   const qc = useQueryClient();
@@ -163,11 +173,14 @@ export default function CmsCareersPage() {
               <Skeleton key={i} className="h-20" />
             ))}
           </div>
-        ) : rows!.length === 0 ? (
-          <EmptyState title="No vacancies posted" teach="Press “+ New vacancy” when you are hiring. Applicants will reach this page automatically." />
         ) : (
-          <div className="space-y-3">
-            {rows!.map((c) => (
+          <DataToolbar title="Vacancies" columns={CAREER_COLUMNS} rows={rows!} dateKey="created_at" searchKeys={["title", "department", "location"]}>
+            {(shown) =>
+              shown.length === 0 ? (
+                <EmptyState title="No vacancies posted" teach="Press “+ New vacancy” when you are hiring. Applicants will reach this page automatically." />
+              ) : (
+                <div className="space-y-3">
+                  {shown.map((c) => (
               <RowCard
                 key={c.id}
                 title={c.title}
@@ -192,8 +205,11 @@ export default function CmsCareersPage() {
                   </span>
                 }
               />
-            ))}
-          </div>
+                  ))}
+                </div>
+              )
+            }
+          </DataToolbar>
         )}
       </div>
 

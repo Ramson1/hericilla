@@ -44,7 +44,7 @@ export function IncidentsPanel({ vehicles }: { vehicles: VehicleRow[] }) {
     queryFn: async () => {
       const { data } = await getSupabase()
         .from("hericilla_incidents")
-        .select("*, vehicles:hericilla_vehicles(reg_no), reporter:hericilla_profiles!incidents_reported_by_fkey(full_name)")
+        .select("*, vehicles:hericilla_vehicles(reg_no), reporter:hericilla_profiles!hericilla_incidents_reported_by_fkey(full_name)")
         .order("occurred_at", { ascending: false })
         .limit(150);
       return ((data as IncidentRow[]) ?? []).map((r) => {

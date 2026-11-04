@@ -127,7 +127,7 @@ export default function PayrollPage() {
     queryFn: async () => {
       const { data } = await getSupabase()
         .from("hericilla_salary_structures")
-        .select("*, employee:hericilla_profiles!salary_structures_employee_id_fkey(full_name, role)")
+        .select("*, employee:hericilla_profiles!hericilla_salary_structures_employee_id_fkey(full_name, role)")
         .order("is_current", { ascending: false })
         .order("effective_from", { ascending: false })
         .limit(300);
@@ -145,6 +145,7 @@ export default function PayrollPage() {
         .from("hericilla_profiles")
         .select("id, full_name, role")
         .eq("status", "active")
+        .eq("is_system", false)
         .order("full_name");
       return (data as EmployeeMini[]) ?? [];
     },
@@ -230,7 +231,7 @@ export default function PayrollPage() {
     queryFn: async () => {
       const { data } = await getSupabase()
         .from("hericilla_payslips")
-        .select("*, employee:hericilla_profiles!payslips_employee_id_fkey(full_name)")
+        .select("*, employee:hericilla_profiles!hericilla_payslips_employee_id_fkey(full_name)")
         .eq("payroll_run_id", openRun?.id)
         .order("net", { ascending: false });
       return ((data as PayslipRow[]) ?? []).map((r) => ({
@@ -425,7 +426,7 @@ export default function PayrollPage() {
         (isPending ? (
           <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
         ) : (
-          <DataToolbar title="Payroll Runs" columns={RUN_COLUMNS} rows={runs ?? []} dateKey="period_month" className="mt-6">
+          <DataToolbar title="Payroll Runs" columns={RUN_COLUMNS} rows={runs ?? []} dateKey="period_month" searchKeys={["period_month", "status", "notes"]} className="mt-6">
             {(shown) =>
               shown.length === 0 ? (
                 <EmptyState
@@ -480,7 +481,7 @@ export default function PayrollPage() {
         ))}
 
       {tab === "structures" && (
-        <DataToolbar title="Salary Structures" columns={STRUCT_COLUMNS} rows={structures ?? []} dateKey="effective_from" className="mt-6">
+        <DataToolbar title="Salary Structures" columns={STRUCT_COLUMNS} rows={structures ?? []} dateKey="effective_from" searchKeys={["employee_name", "employee_role", "pay_cycle"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState

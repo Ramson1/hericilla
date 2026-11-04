@@ -16,6 +16,8 @@ import {
   EmptyState,
 } from "@hericilla/ui";
 import { getSupabase } from "@hericilla/supabase-clients";
+import { DataToolbar } from "@/components/DataToolbar";
+import type { ExportColumn } from "@/lib/export";
 
 type Testimonial = {
   id: string;
@@ -27,6 +29,15 @@ type Testimonial = {
   approved: boolean;
   display_order: number;
 };
+
+const TESTIMONIAL_COLUMNS: ExportColumn<Testimonial>[] = [
+  { key: "client_name", label: "Client" },
+  { key: "company", label: "Company" },
+  { key: "quote", label: "Quote" },
+  { key: "rating", label: "Rating", kind: "number" },
+  { key: "approved", label: "On website", format: (t) => (t.approved ? "Yes" : "No") },
+  { key: "display_order", label: "Order", kind: "number" },
+];
 
 const BLANK = { client_name: "", company: "", photo_url: "", quote: "", rating: "5", display_order: "0" };
 
@@ -124,11 +135,14 @@ export default function CmsTestimonialsPage() {
               <Skeleton key={i} className="h-20" />
             ))}
           </div>
-        ) : rows!.length === 0 ? (
-          <EmptyState title="No testimonials yet" teach="When a client compliments the work, write it down here and approve it for the site." />
         ) : (
-          <div className="space-y-3">
-            {rows!.map((t) => (
+          <DataToolbar title="Testimonials" columns={TESTIMONIAL_COLUMNS} rows={rows!} searchKeys={["client_name", "company", "quote"]}>
+            {(shown) =>
+              shown.length === 0 ? (
+                <EmptyState title="No testimonials yet" teach="When a client compliments the work, write it down here and approve it for the site." />
+              ) : (
+                <div className="space-y-3">
+                  {shown.map((t) => (
               <RowCard
                 key={t.id}
                 title={`“${t.quote.slice(0, 70)}${t.quote.length > 70 ? "…" : ""}”`}
@@ -150,8 +164,11 @@ export default function CmsTestimonialsPage() {
                   </span>
                 }
               />
-            ))}
-          </div>
+                  ))}
+                </div>
+              )
+            }
+          </DataToolbar>
         )}
       </div>
 

@@ -208,6 +208,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const { collapsed, toggle } = useSidebarCollapse("hericilla-admin-sidebar");
   const unseen = useUnseenCount(profile?.id ?? null, profile?.role ?? null);
   const activeHref = useActiveHref(pathname);
@@ -281,13 +282,26 @@ export function AdminShell({ children }: { children: ReactNode }) {
     return () => { document.removeEventListener("keydown", onKey); document.removeEventListener("mousedown", onClick); };
   }, [notifOpen]);
 
+  // The box searches page titles only (it is not a record search), so a non-empty query
+  // always shows something: the matching destinations, or an explicit "no page matches".
+  const trimmedQuery = query.trim();
   const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = trimmedQuery.toLowerCase();
     if (!q) return [];
     return ALL_DESTINATIONS.filter(
       (d) => d.label.toLowerCase().includes(q) || d.description.toLowerCase().includes(q),
     ).slice(0, 6);
-  }, [query]);
+  }, [trimmedQuery]);
+
+  // The page-search dropdown dismisses on click-away, like the notifications menu.
+  useEffect(() => {
+    if (!trimmedQuery) return;
+    const onClick = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setQuery("");
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [trimmedQuery]);
 
   const isActive = (href: string) => href === activeHref;
 
@@ -364,16 +378,25 @@ export function AdminShell({ children }: { children: ReactNode }) {
               </span>
               Hericilla
             </Link>
-            <div className="relative flex-1 max-w-md ml-auto lg:ml-0">
+            <div className="relative flex-1 max-w-md ml-auto lg:ml-0" ref={searchRef}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-ink-soft" aria-hidden />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Find anything…"
-                aria-label="Find anything"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && matches.length > 0) {
+                    e.preventDefault();
+                    router.push(matches[0].href);
+                    setQuery("");
+                  } else if (e.key === "Escape") {
+                    setQuery("");
+                  }
+                }}
+                placeholder="Find a page…"
+                aria-label="Find a page"
                 className="w-full rounded-[var(--radius-btn)] border-2 border-[var(--color-line)] py-2.5 pl-10 pr-3 text-base focus:border-brand-400 focus:outline-none"
               />
-              {matches.length > 0 && (
+              {trimmedQuery && (
                 <div className="absolute top-full mt-1 w-full rounded-xl border border-[var(--color-line)] bg-white shadow-[var(--shadow-pop)] z-50 overflow-hidden">
                   {matches.map((m) => (
                     <Link
@@ -386,6 +409,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       <span className="block text-sm text-ink-soft">{m.description}</span>
                     </Link>
                   ))}
+                  {matches.length === 0 && (
+                    <p className="px-4 py-3 text-sm text-ink-soft">
+                      No page matches “{trimmedQuery}”. This box jumps to screens; to find a job, invoice or
+                      client, use the search and filters on that page.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

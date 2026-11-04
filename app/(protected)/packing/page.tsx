@@ -82,7 +82,7 @@ export default function PackingPage() {
       const { data } = await getSupabase()
         .from("hericilla_work_orders")
         .select("id, wo_number, service_type, clients:hericilla_clients(name)")
-        .in("status", ["new", "quoted", "approved", "assigned", "in_progress"])
+        .in("status", ["open", "in_progress"])
         .order("created_at", { ascending: false });
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
       return ((data as (Omit<{ id: string; wo_number: string; service_type: string; clients?: unknown }, never>)[]) ?? []).map((r) => ({
@@ -98,7 +98,7 @@ export default function PackingPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").eq("is_system", false).order("full_name");
       return (data as { id: string; full_name: string }[]) ?? [];
     },
     enabled: creating,
@@ -156,7 +156,7 @@ export default function PackingPage() {
           <Skeleton className="h-24" />
         </div>
       ) : (
-        <DataToolbar title="Packing & Removal" columns={PACKING_COLUMNS} rows={jobs ?? []} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Packing & Removal" columns={PACKING_COLUMNS} rows={jobs ?? []} dateKey="created_at" searchKeys={["ref_no", "wo_number", "origin_address", "destination_address", "stage"]} className="mt-6">
           {(shown) => {
             if (shown.length === 0)
               return (

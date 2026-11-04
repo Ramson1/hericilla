@@ -200,7 +200,7 @@ export default function DocumentsPage() {
       {isPending ? (
         <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
       ) : (
-        <DataToolbar title="Contracts & Documents" columns={DOC_COLUMNS} rows={shown} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Contracts & Documents" columns={DOC_COLUMNS} rows={shown} dateKey="created_at" searchKeys={["title", "doc_type", "client_name", "sensitivity"]} className="mt-6">
           {(listed) =>
             listed.length === 0 ? (
               <EmptyState title="No documents here yet" teach="Press “+ Upload document” to file a contract, permit, receipt or certificate." />

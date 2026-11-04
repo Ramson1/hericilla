@@ -120,13 +120,24 @@ export default function JobDetailPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").eq("is_system", false).order("full_name");
       return (data as Person[]) ?? [];
     },
     enabled: assignOpen,
   });
 
-  const assigneeName = (people ?? []).find((p) => p.id === sr?.assigned_to)?.full_name;
+  // The officer row must resolve whether or not the assign dialog has ever been opened,
+  // so look the name up directly instead of relying on the picker's gated list.
+  const { data: assignee } = useQuery({
+    queryKey: ["profile-by-id", sr?.assigned_to],
+    queryFn: async () => {
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("id", sr?.assigned_to ?? "").maybeSingle();
+      return (data as Person | null) ?? null;
+    },
+    enabled: Boolean(sr?.assigned_to),
+  });
+
+  const assigneeName = assignee?.full_name ?? (people ?? []).find((p) => p.id === sr?.assigned_to)?.full_name;
 
   async function setStatus(status: string) {
     const { error } = await getSupabase().from("hericilla_service_requests").update({ status }).eq("id", id);

@@ -113,7 +113,7 @@ export default function JobsPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name, role").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name, role").eq("status", "active").eq("is_system", false).order("full_name");
       return (data as { id: string; full_name: string; role: string }[]) ?? [];
     },
     enabled: creating,
@@ -190,7 +190,7 @@ export default function JobsPage() {
           ))}
         </div>
       ) : (
-        <DataToolbar title="Jobs" columns={JOB_COLUMNS} rows={visible} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Jobs" columns={JOB_COLUMNS} rows={visible} dateKey="created_at" searchKeys={["ref_no", "title", "client_name", "status"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState

@@ -73,7 +73,7 @@ export default function InboxPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").in("role", ["admin", "super_admin", "supervisor", "procurement_officer", "logistics_officer", "finance_officer", "hr_officer"]).order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("is_system", false).in("role", ["admin", "super_admin", "supervisor", "procurement_officer", "logistics_officer", "finance_officer", "hr_officer"]).order("full_name");
       return (data as { id: string; full_name: string }[]) ?? [];
     },
   });
@@ -145,7 +145,7 @@ export default function InboxPage() {
           ))}
         </div>
       ) : (
-        <DataToolbar title="Enquiries" columns={ENQ_COLUMNS} rows={visible} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Enquiries" columns={ENQ_COLUMNS} rows={visible} dateKey="created_at" searchKeys={["ref_no", "name", "company", "email", "phone", "message"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState

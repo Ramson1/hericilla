@@ -44,6 +44,8 @@ export default function PurchaseRequestPage() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [quote, setQuote] = useState({ supplier_id: "", total_amount: "", lead_time_days: "", valid_until: "" });
   const [quoteBusy, setQuoteBusy] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const { data: pr, isPending } = useQuery({
     queryKey: ["pr", id],
@@ -65,8 +67,17 @@ export default function PurchaseRequestPage() {
   const { data: quotes } = useQuery({
     queryKey: ["pr-quotes", id],
     queryFn: async () => {
-      const { data } = await getSupabase().from("hericilla_supplier_quotations").select("*").eq("purchase_request_id", id).order("total_amount");
-      return (data as SupQuote[]) ?? [];
+      const { data } = await getSupabase()
+        .from("hericilla_supplier_quotations")
+        // Carry the supplier name on the quote itself. Reading it from the supplier-picker list
+        // meant a card lost its name after a reload, because that list only loads while the
+        // "Add quote" dialog is open.
+        .select("*, supplier:hericilla_suppliers(name)")
+        .eq("purchase_request_id", id)
+        .order("total_amount");
+      return ((data as (SupQuote & { supplier?: { name: string } | null })[]) ?? []).map(
+        ({ supplier, ...q }) => ({ ...q, supplier_name: supplier?.name ?? q.supplier_name }),
+      );
     },
   });
 
@@ -155,6 +166,23 @@ export default function PurchaseRequestPage() {
     router.push(`/procurement/po/${po.id}`);
   }
 
+  // Close is the only way out of an open request that never became an order. Reject exists but is
+  // reachable only from the approval step, and a request can never be deleted — purchase orders,
+  // quote rows and items all reference it with ON DELETE NO ACTION. "closed" is part of the status
+  // domain and the final step of the tracker, so this is a legal transition, not a workaround.   
+  async function closePr() {
+    setClosing(true);
+    setActionError(null);
+    const { error } = await getSupabase().from("hericilla_purchase_requests").update({ status: "closed" }).eq("id", id);
+    setClosing(false);
+    if (error) {
+      setActionError("Could not close this request: " + error.message);
+      return;
+    }
+    void qc.invalidateQueries({ queryKey: ["pr", id] });
+    void qc.invalidateQueries({ queryKey: ["purchase-requests"] });
+  }
+
   if (isPending || !pr) return <div className="space-y-4"><Skeleton className="h-12 w-72" /><Skeleton className="h-48" /></div>;
 
   const statusSteps = ["draft", "submitted", "quoting", "pending_approval", "approved", "ordered", "received", "closed"];
@@ -217,7 +245,7 @@ export default function PurchaseRequestPage() {
           {(quotes ?? []).map((q) => (
             <RowCard
               key={q.id}
-              title={suppliers?.find((s) => s.id === q.supplier_id)?.name ?? "Supplier"}
+              title={q.supplier_name ?? suppliers?.find((s) => s.id === q.supplier_id)?.name ?? "Supplier"}
               subtitle={`${money(q.total_amount)}${q.lead_time_days ? ` · ${q.lead_time_days}d lead` : ""}${q.valid_until ? ` · valid to ${new Date(q.valid_until).toLocaleDateString()}` : ""}`}
               badge={q.is_selected ? <StatusBadge status="approved" /> : undefined}
               actions={
@@ -247,7 +275,13 @@ export default function PurchaseRequestPage() {
         {pr.status === "approved" && !(quotes ?? []).some((q) => q.is_selected) && (
           <p className="text-base text-warning-800 self-center">Choose a supplier quote first, then you can create the order.</p>
         )}
+        {pr.status !== "closed" && pr.status !== "rejected" && (
+          <BigButton variant="secondary" disabled={closing} onClick={() => void closePr()}>
+            {closing ? "Closing…" : "Close request"}
+          </BigButton>
+        )}
       </div>
+      {actionError && <p className="mt-3 text-base text-danger-800">{actionError}</p>}
 
       <Modal open={quoteOpen} title="Add supplier quote" onClose={() => setQuoteOpen(false)}>
         <div className="space-y-5">

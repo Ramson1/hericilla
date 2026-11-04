@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { FileText, FileSpreadsheet, FileType2, X } from "lucide-react";
+import { FileText, FileSpreadsheet, FileType2, Search, X } from "lucide-react";
 import { BigButton } from "@hericilla/ui";
 import { exportCsv, exportDocx, exportPdf, type ExportColumn } from "@/lib/export";
 
@@ -12,6 +12,11 @@ type DataToolbarProps<T> = {
   rows: T[];
   /** Column holding an ISO date/date string to filter by. When omitted, only export shows. */
   dateKey?: keyof T & string;
+  /**
+   * Case-insensitive free-text search over the given column keys, so every page that uses this
+   * bar gets "type a reference / name / description and find the row" without writing it twice.
+   */
+  searchKeys?: (keyof T & string)[];
   /** Render-prop: the toolbar hands back the date-filtered rows so the page lists exactly what it exports. */
   children: (visibleRows: T[]) => ReactNode;
   className?: string;
@@ -35,23 +40,32 @@ function dayStart(value: string): number {
  * - Optional From/To date range filters `rows` client-side on `dateKey`.
  * - PDF / CSV / DOCX export whatever is currently visible, using the given columns.
  */
-export function DataToolbar<T>({ title, columns, rows, dateKey, children, className = "" }: DataToolbarProps<T>) {
+export function DataToolbar<T>({ title, columns, rows, dateKey, searchKeys, children, className = "" }: DataToolbarProps<T>) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [term, setTerm] = useState("");
 
   const visible = useMemo(() => {
-    if (!dateKey || (!from && !to)) return rows;
-    const fromT = from ? dayStart(`${from}T00:00:00`) : -Infinity;
-    const toT = to ? dayStart(`${to}T23:59:59`) : Infinity;
-    return rows.filter((r) => {
-      const raw = (r as unknown as Record<string, unknown>)[dateKey];
-      if (raw == null || raw === "") return true; // keep undated rows unless a range is set
-      const t = dayStart(String(raw));
-      if (Number.isNaN(t)) return true;
-      return t >= fromT && t <= toT;
-    });
-  }, [rows, dateKey, from, to]);
-
+    let list = rows;
+    if (dateKey && (from || to)) {
+      const fromT = from ? dayStart(`${from}T00:00:00`) : -Infinity;
+      const toT = to ? dayStart(`${to}T23:59:59`) : Infinity;
+      list = list.filter((r) => {
+        const raw = (r as unknown as Record<string, unknown>)[dateKey];
+        if (raw == null || raw === "") return true; // keep undated rows unless a range is set
+        const t = dayStart(String(raw));
+        if (Number.isNaN(t)) return true;
+        return t >= fromT && t <= toT;
+      });
+    }
+    const q = term.trim().toLowerCase();
+    if (q && searchKeys?.length) {
+      list = list.filter((r) =>
+        searchKeys.some((k) => String((r as unknown as Record<string, unknown>)[k] ?? "").toLowerCase().includes(q)),
+      );
+    }
+    return list;
+  }, [rows, dateKey, from, to, term, searchKeys]);
 
   const filename = `${slugify(title)}-${new Date().toISOString().slice(0, 10)}`;
   const hasRows = visible.length > 0;
@@ -59,6 +73,23 @@ export function DataToolbar<T>({ title, columns, rows, dateKey, children, classN
   return (
     <div className={`mb-6 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white p-4 ${className}`}>
       <div className="flex flex-wrap items-end gap-3">
+        {searchKeys?.length && (
+          <label className="block min-w-[15rem] flex-1 max-w-sm">
+            <span className="mb-1 block text-sm font-semibold text-brand-950">Search</span>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden />
+              <input
+                type="search"
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                placeholder="Reference, name, description…"
+                aria-label={`Search ${title}`}
+                className="w-full rounded-xl border-2 border-[var(--color-line)] bg-white px-3 py-2.5 pl-10 text-base focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-200"
+              />
+            </div>
+          </label>
+        )}
+
         {dateKey && (
           <>
             <label className="block">

@@ -28,7 +28,7 @@ export function InspectionsPanel() {
     queryFn: async () => {
       const { data } = await getSupabase()
         .from("hericilla_inspection_results")
-        .select("*, vehicles:hericilla_vehicles(reg_no), driver:hericilla_profiles!inspection_results_driver_id_fkey(full_name), inspection_checklists:hericilla_inspection_checklists(name)")
+        .select("*, vehicles:hericilla_vehicles(reg_no), driver:hericilla_profiles!hericilla_inspection_results_driver_id_fkey(full_name), inspection_checklists:hericilla_inspection_checklists(name)")
         .order("submitted_at", { ascending: false })
         .limit(100);
       return ((data as InspectionRow[]) ?? []).map((r) => {

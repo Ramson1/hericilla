@@ -94,7 +94,7 @@ export default function PackingJobPage() {
   const { data: people } = useQuery({
     queryKey: ["profiles-mini"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("id, full_name").eq("status", "active").eq("is_system", false).order("full_name");
       return (data as { id: string; full_name: string }[]) ?? [];
     },
   });

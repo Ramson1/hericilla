@@ -23,6 +23,7 @@ export default function CmsPage() {
           "Pick what you want to change.",
           "Only published or approved items appear on the live site.",
           "The website updates itself within about a minute.",
+          "Page wording and contact details are edited under “Page text”.",
         ]}
       />
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -72,12 +72,15 @@ const SUPPLIER_COLUMNS: ExportColumn<Supplier>[] = [
 export default function SuppliersPage() {
   const qc = useQueryClient();
   const { profile } = useAuth();
-  const [filter, setFilter] = useState("approved");
+  // "all" is the honest default: new suppliers are inserted as "prospective", so starting on
+  // the approved tab made a successful save look like it had vanished.
+  const [filter, setFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(BLANK);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<Supplier | null>(null);
 
   const { data: rows, isPending } = useQuery({
     queryKey: ["suppliers"],
@@ -149,6 +152,26 @@ export default function SuppliersPage() {
     void qc.invalidateQueries({ queryKey: ["suppliers"] });
   }
 
+  // Suppliers are retired, not erased: purchase orders, expenses, quotations and documents all
+  // point at them with ON DELETE NO ACTION, so a hard delete would take the ledger with it.
+  // The list query already hides anything with a deleted_at.
+  async function confirmRemove() {
+    if (!removing) return;
+    setBusy(true);
+    const { error: err } = await getSupabase()
+      .from("hericilla_suppliers")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", removing.id);
+    setBusy(false);
+    if (err) {
+      setError("Could not remove: " + err.message);
+      setRemoving(null);
+      return;
+    }
+    setRemoving(null);
+    void qc.invalidateQueries({ queryKey: ["suppliers"] });
+  }
+
   return (
     <div>
       <PageHeader
@@ -179,7 +202,7 @@ export default function SuppliersPage() {
           ))}
         </div>
       ) : (
-        <DataToolbar title="Suppliers" columns={SUPPLIER_COLUMNS} rows={visible} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Suppliers" columns={SUPPLIER_COLUMNS} rows={visible} dateKey="created_at" searchKeys={["name", "rc_number", "email", "phone", "products_services"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState title="No suppliers here yet" teach="Press “+ New supplier” for the trucking company or materials vendor you buy from most." />
@@ -214,6 +237,9 @@ export default function SuppliersPage() {
                         )}
                         <BigButton size="md" variant="secondary" onClick={() => startEdit(s)}>
                           Edit
+                        </BigButton>
+                        <BigButton size="md" variant="danger" onClick={() => { setRemoving(s); setError(null); }}>
+                          Remove
                         </BigButton>
                       </span>
                     }
@@ -253,6 +279,23 @@ export default function SuppliersPage() {
             </BigButton>
             <BigButton variant="success" onClick={() => void save()} disabled={busy}>
               {busy ? "Saving…" : "Save supplier"}
+            </BigButton>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={!!removing} title={`Remove ${removing?.name ?? ""}?`} onClose={() => setRemoving(null)}>
+        <div className="space-y-5">
+          <p className="text-base">
+            This takes <strong>{removing?.name}</strong> off the supplier list, so nobody can pick it for a new
+            purchase. Anything already recorded against it — purchase orders, expenses, quotations, documents —
+            stays exactly as it is.
+          </p>
+          {error && <Card className="border-danger-600 text-danger-800">{error}</Card>}
+          <div className="flex justify-end gap-3">
+            <BigButton variant="secondary" onClick={() => setRemoving(null)}>Keep supplier</BigButton>
+            <BigButton variant="danger" disabled={busy} onClick={() => void confirmRemove()}>
+              {busy ? "Removing…" : "Remove from list"}
             </BigButton>
           </div>
         </div>

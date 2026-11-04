@@ -112,7 +112,7 @@ export default function WorkOrdersPage() {
           ))}
         </div>
       ) : (
-        <DataToolbar title="Work orders" columns={WO_COLUMNS} rows={visible} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Work orders" columns={WO_COLUMNS} rows={visible} dateKey="created_at" searchKeys={["wo_number", "title", "client_name", "sr_ref", "status"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState

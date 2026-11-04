@@ -104,7 +104,10 @@ export default function MoneyPage() {
     queryFn: async () => {
       const { data } = await getSupabase()
         .from("hericilla_expenses")
-        .select("*, submitter:hericilla_profiles!expenses_submitted_by_fkey(full_name)")
+        // Two FKs point at hericilla_profiles (submitted_by / approved_by), so the embed must
+        // hint the exact constraint name — and that name carries the full hericilla_ prefix,
+        // otherwise PostgREST answers PGRST200 and the expense list can never render.
+        .select("*, submitter:hericilla_profiles!hericilla_expenses_submitted_by_fkey(full_name)")
         .order("occurred_at", { ascending: false })
         .limit(300);
       const pick = <T,>(v: unknown): T | null => (v == null ? null : Array.isArray(v) ? ((v[0] as T) ?? null) : (v as T));
@@ -130,7 +133,10 @@ export default function MoneyPage() {
       const { data } = await getSupabase()
         .from("hericilla_work_orders")
         .select("id, wo_number")
-        .in("status", ["completed", "invoiced", "closed", "in_progress"])
+        // hericilla_work_orders.status is the enum (open|in_progress|completed|closed);
+        // "invoiced" is not a work-order state and PostgREST rejects it with 22P02, which
+        // would silently leave the picker empty.
+        .in("status", ["completed", "closed", "in_progress"])
         .order("created_at", { ascending: false })
         .limit(200);
       return (data as { id: string; wo_number: string }[]) ?? [];
@@ -264,7 +270,7 @@ export default function MoneyPage() {
         (isPending ? (
           <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
         ) : (
-          <DataToolbar title="Invoices" columns={INVOICE_COLUMNS} rows={invoices ?? []} dateKey="issue_date" className="mt-6">
+          <DataToolbar title="Invoices" columns={INVOICE_COLUMNS} rows={invoices ?? []} dateKey="issue_date" searchKeys={["ref_no", "client_name", "status"]} className="mt-6">
             {(shown) =>
               shown.length === 0 ? (
                 <EmptyState title="No invoices yet" teach="When a job is done or a quotation approved, press “+ New invoice” to bill the client." />
@@ -286,7 +292,7 @@ export default function MoneyPage() {
         ))}
 
       {tab === "expenses" && (
-        <DataToolbar title="Expenses" columns={EXPENSE_COLUMNS} rows={expenses ?? []} dateKey="occurred_at" className="mt-6">
+        <DataToolbar title="Expenses" columns={EXPENSE_COLUMNS} rows={expenses ?? []} dateKey="occurred_at" searchKeys={["description", "category", "submitter_name", "status"]} className="mt-6">
           {(shown) =>
             shown.length === 0 ? (
               <EmptyState title="No expenses logged" teach="Fuel, tolls, hires — press “+ Log expense” the day you spend it, with the receipt." />

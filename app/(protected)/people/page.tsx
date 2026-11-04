@@ -40,7 +40,7 @@ export default function PeoplePage() {
   const { data: people, isPending } = useQuery({
     queryKey: ["profiles-register"],
     queryFn: async () => {
-      const { data } = await getSupabase().from("hericilla_profiles").select("*").order("full_name");
+      const { data } = await getSupabase().from("hericilla_profiles").select("*").eq("is_system", false).order("full_name");
       return (data as PersonRow[]) ?? [];
     },
   });
@@ -146,7 +146,7 @@ export default function PeoplePage() {
       {isPending ? (
         <div className="mt-6 space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div>
       ) : (
-        <DataToolbar title="Staff Register" columns={PEOPLE_COLUMNS} rows={shown} dateKey="created_at" className="mt-6">
+        <DataToolbar title="Staff Register" columns={PEOPLE_COLUMNS} rows={shown} dateKey="created_at" searchKeys={["full_name", "email", "employee_no", "phone", "role"]} className="mt-6">
           {(listed) =>
             listed.length === 0 ? (
               <EmptyState title="No staff listed yet" teach="Accounts are created when someone is invited — then their department and role show up here." />

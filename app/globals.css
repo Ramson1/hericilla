@@ -2,6 +2,6 @@
 @import "@hericilla/config/tokens.css";
 
 /* Tailwind v4 does not scan workspace packages automatically — point it at the shared UI kit. */
-@source "../../../packages/ui/src";
+@source "../packages/ui/src";
 
 /* Admin surfaces use standard web sizing (defined in @hericilla/config/tokens.css) */
